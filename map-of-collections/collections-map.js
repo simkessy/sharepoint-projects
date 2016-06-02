@@ -3,7 +3,7 @@ var scmap = scmap || {};
 scmap = {
   author: "Kessy Similien (simkessy@gmail.com)",
   version: 0.1,
-  listBaseUrl: (typeof _spPageContextInfo !== "undefined") ? (_spPageContextInfo.siteServerRelativeUrl !== "/") ? _spPageContextInfo
+  listBaseUrl: (typeof _spPageContextInfo !== "undefined") ? (_spPageContextInfo.siteServerRelativeUrl !== "/") ? _spPageContextInfo,
   lists: [
     {
       name: "Site-Map-Collections",
@@ -197,7 +197,7 @@ scmap = {
     var webs = {}
 
     // process each site
-    scmap.d.sites.current.map(function(o, i) {
+    scmap.d.sites.map(function(o, i) {
 
       //remove http:// + domain
       thisBaseUrl = o.url.replace(location.protocol + "//" + location.host, "");
