@@ -1,5 +1,4 @@
-// declare global 
-var scmap = scmap || {}; 
+var scmap = scmap || {};
 
 scmap = {
 	author: "Kessy Similien (simkessy@gmail.com)",
@@ -16,7 +15,7 @@ scmap = {
 				{'Type':'Note','DisplayName':'CurrentSite'},
 				{'Type':'Note','DisplayName':'Parent'},
 				{'Type':'Note','DisplayName':'URL'},
-				{'Type':'Note','DisplayName':'SiteCollection'}],
+				{'Type':'Text','DisplayName':'SiteCollection'}],
 			view: "<ViewFields><FieldRef Name='CurrentSite' /><FieldRef Name='CurrentSite' /><FieldRef Name='Parent' /><FieldRef Name='URL' /><FieldRef Name='SiteCollection' /></ViewFields>"
 	}],
 	d: {
@@ -30,60 +29,41 @@ scmap = {
 		}
 	},
 	notice: function(msg) {
-		SP.UI.Notify.addNotification(msg false);
-	}
+		SP.UI.Notify.addNotification(msg, false);
+	},
 	errorHandling: {
 		failure: function() { alert("Failed") }
 	},
 	init: function() {
 		// check if lists exist
-		this.checkForLists()
+		scmap.checkForLists()
 
 	},
 	checkForLists: function() {
-		var listCheckPromise = [];
+		var listCheckPromises = [];
 
 		$.each(scmap.lists, function(i, list) {
-			listCheckPromise = $().SPServices({
+			listCheckPromises[i] = $().SPServices({
 				operation: "GetList",
   			listName: list.name,
 			})
 		})
 
-		$.map(listCheckPromise, function(list){
-			list.then(pass, fail)
-		})
+		// $.map(listCheckPromises, function(listPromise, index){
+		// 	listPromise.then(pass.bind(null, index), fail.bind(null, index))
+		// })
 
-		function pass(data) {
-			var result = $(data);
-			console.log(JSON.stringify(result))
-			console.log(list.name + 'exists')
-		}
+    $.when.apply($, listCheckPromises).then(pass, fail)
 
-		function fail(data) {
-			console.log(list.name, 'does not exist. Creating...')
-			scmap.createList(data)
-		}
-	},
-	createList: function(list) {
-		var createPromise = $().SPServices({
-			operation: "AddList",
-			listName: list.name,
-			description: list.description,
-			templateID: 100
-		})
+		function pass() {
+      var currentList = scmap.lists[index]
+      console.log("PASS:", 'Lists created')
+    }
 
-		createPromise.then(pass, fail);
-
-		function pass() { 
-			var text = "list has been created"
-			console.log(text)
-			this.notice(text)
-		}
-
-		function fail() {
-			this.notice('failed to create list')
-			return false; 
+    function fail(index) {
+      // var currentList = scmap.lists[index]
+			console.log("FAIL:", 'Lists do not exist. Creating...')
+			scmap.createLists()
 		}
 	},
 	createLists: function() {
@@ -98,231 +78,247 @@ scmap = {
 				templateID: 100
 			})
 		})
-		console.log(createPromises)
+
 		// when promises complete, run update lists
-		$.map(createPromises, function(promise) {
-			promise.then(success, failure);
-		})
+    $.when.apply($, createPromises).then(pass, fail)
 
 		// error handling on list creation
-		function success() {
-			alert("successfully created lists")
+		function pass() {
+			console.log("successfully created lists")
 			scmap.setListColumns()
 		}
 
-		function failure(error) {
+		function fail(error) {
 			console.log($(error).getSPErrorCode())
 		}
-		
 	},
 	setListColumns: function() {
 		$.map(scmap.lists, function(list, index) {
-			var updateList = spjs_UpdateList(list.name, L_Menu_BaseUrl, list.fields, []);
+			var updateList = spjs_UpdateList(list.name, L_Menu_BaseUrl, list.fields, [], []);
 
 			if(!updateList.success) {
-				alert(updateList.errorText)
+				console.log(updateList.errorText)
 			}else{
-				alert("Updated list:", list.name)
+				console.log("Updated list:", list.name)
 			}
 		})
-	}, 
+    console.log('Add site collections to map')
+	},
 	getCollections: function() {
-		getCollections = $().SPServices({
-			operation: "GetListItemJSON",
+		siteCollectionsPromise = $().SPServices.SPGetListItemsJson({
 			listName: scmap.lists[0].name,
-			CAMLViewFields: scmap.lists[0].view
+			CAMLViewFields: scmap.lists[0].view,
+      mappingOverrides: {
+        ows_Title: {
+            mappedName: "title",
+            objectType: "Text"
+        },
+        ows_URL: {
+            mappedName: "url",
+            objectType: "Text"
+        }
+      }
 		})
 
-		getCollections.then(success, scmap.errorHandling.failure)
+		siteCollectionsPromise.then(success, scmap.errorHandling.failure)
 
-		function success(response) {
-			var result = $(response)
-			// get sites for each collection
-			this.d.collections.current = result.find('Web')
+		function success() {
+			var result = this.data
+			// get each collection
+			scmap.d.collections.current = this.data.map(function(sc) {
+        return {title: sc.title, url: sc.url}
+      })
 			// loop through each site collection
 			// get all sites per collection
-			// find diff between current list 
+      scmap.d.collections.current.map(scmap.getSites)
+
+			// find diff between current list
 			// remove deleted items
-			// add new items 
+			// add new items
 
 			// or remove all and add new
-			scmap.getSites(); 
+			//scmap.getSites();
 		}
 	},
-	getSites: function(results) {
-		var collections = results; 
-		scmap.d.sites.current = $.map(collections, function(site, index) {
-			var sitesPromise = $().SPServices({
-				operation: "GetAllSubWebCollection",
-				webURL: site.URL
-			});
-		})
+  getSites: function(collection) {
+    var sitePromise = $().SPServices({
+      operation: "GetAllSubWebCollection",
+      webURL: collection.url,
+      completefunc: function(xData, Status) {
+        var results = $(xData.responseXML);
+        results.find("Web").each(function() {
+          var self = $(this);
+          scmap.d.sites.current.push({
+            title: self.attr("Title"),
+            url: self.attr("Url"),
+            collection: collection.title
+          })
+        })
+      }
+    })
+  },
+  update: function() {
+    var b, webs, thisBaseUrl, p, currItems, currItemsObj, newList, uList, data, res, noChangeCount, uCount, nCount, dCount, error;
 
-		// find changes
-		var updates = scmap.d.sites.current.diff(scmap.d.sites.stored)
+    // create this object right away in getSites
+    var webs = {}
 
-		
-	}
+    // process each site
+    scmap.d.sites.current.map(function(o, i) {
+
+      //remove http:// + domain
+      thisBaseUrl = o.url.replace(location.protocol + "//" + location.host, "");
+
+      // if there's nothing (root site), give it "/"
+      if (thisBaseUrl === "") {
+        thisBaseUrl = "/";
+      }
+
+      //remove http:// + domain
+      p = o.url.replace(location.protocol + "//" + location.host, "");
+
+      // get parent by removing everything after last "/"
+      p = p.substring(0, p.lastIndexOf("/"));
+
+      // if no parent, set parent to root
+      if (p === "") {
+        p = "/";
+      }
+
+      // build object with each site title and parent
+      webs[thisBaseUrl] = {
+        "title": o.title,
+        "parent": p,
+        "collection": o.collection
+      };
+    });
+
+    // GET ALL CURRENT SITES IN SITE-MAP LIST
+    currItems = spjs_QueryItems({
+      "listName": scmap.lists[1].name,
+      "listBaseUrl": spjs.siteMap.data.listBaseUrl,
+      "query": "<Where><IsNotNull><FieldRef Name='ID' /></IsNotNull></Where>",
+      "viewFields": ["ID", "CurrentSite", "Parent", "URL", "SiteCollection"]
+    });
+
+    // START HANDLING ADDING LINKS TO THE NEW LIST
+    currItemsObj = {};
+    noChangeCount = 0;
+    uCount = 0; // UPDATE COUNT
+    nCount = 0; // NEW COUNT
+    dCount = 0; // DELETE COUNT
+
+    // CREATE OBJECT FOR ALL SITES
+    $.each(currItems.items, function(i, item) {
+      currItemsObj[item.URL === null ? "" : item.URL] = {
+        "ID": item.ID,
+        "CurrentSite": item.CurrentSite,
+        "Parent": item.Parent,
+        "URL": item.URL,
+        "SiteCollection": item.SiteCollection
+      };
+    });
+
+    error = false;    // GO THROUGH ALL RETURNED SITES FOR COLLECTION
+
+    $.each(webs, function(url, o) {
+      // CREATE ITEM: TITLE - CURRENT - URL - PARENT
+      //// ADD COLLECTION HERE!
+      data = {
+        "Title": "[...]",
+        "CurrentSite": "{\"v\":\"" + url + "\",\"f\":\"<a href='" + url + "' target='_blank'>" + o.title + "</a>\"}",
+        "URL": url,
+        "Parent": o.parent,
+        "SiteCollection": o.collection
+      }
+
+      // CHECK IF CURRENT SITE ALREADY IN LIST
+      // IF CURRENT SITE FOUND!
+      if (currItemsObj[url] !== undefined) {
+        // FOUND THE SITE GIVEN URL
+        // NOW CHECK IF ALL PROPERTIES ARE UNCHANGED
+        //// SHOULD ADD A CHECK FOR SITE COLLECTION AS WELL
+        if (
+          (currItemsObj[url].CurrentSite === data.CurrentSite) &&
+          (currItemsObj[url].Parent === o.parent) &&
+          (currItemsObj[url].URL === url) &&
+          (currItemsObj[url].SiteCollection === o.collection)
+          ) {
+
+          // IF THERE'S NO CHANGE FOR CURRENT ITEM, REMOVE FROM CURRENT ITEM LIST
+          // REMAINING ITEMS WILL BE THE UPDATES
+          delete currItemsObj[url];
+          noChangeCount += 1;
+          return;
+        }
+
+        // REMAINING ITEMS, UPDATES TO BE MADE
+        res = spjs_updateItem({
+          "listName": scmap.lists[1].name,
+          "listBaseUrl": spjs.siteMap.data.listBaseUrl,
+          "id": currItemsObj[url].ID,
+          "data": data
+        });
+
+        // REMOVE CURRENTLY UPDATED ITEM
+        delete currItemsObj[url];
+
+        // IF THERE'S AN ERROR IN UPDATED THE ITEM
+        if (!res.success) {
+          error = {
+            "errorText": res.errorText,
+            "code": res.errorCode
+          };
+          return false;
+        } else {
+          // INCREMENT UPDATE COUNT
+          uCount += 1;
+        }
+      } else {
+        // IF ITEM NOT FOUND
+        // UPDATE THE LIST WITH THE NEW ITEM
+        res = spjs_addItem({
+          "listName": scmap.lists[1].name,
+          "listBaseUrl": spjs.siteMap.data.listBaseUrl,
+          "data": data
+        });
+        if (!res.success) {
+          // ERROR ON NEW ITEM CREATION
+          error = {
+            "errorText": res.errorText,
+            "code": res.errorCode
+          };
+          return false;
+        } else {
+          // INCREMENT NEW COUNT
+          nCount += 1;
+        }
+      }
+    });
+
+    // ERROR HANDLING
+    if (error !== false) {
+      alert("SPJS-SiteMap: An error occurred\n---------------------------------------\nAre you updating from a previous version? If the below error message tells you that one or more field types are not installed correctly, please delete the list \"SPJS-SiteMap\" and rerun this script. The list will be recreated with the missing fields.\n\nPlease note that you must edit the SiteMap chart to reselect the list and fields.\n\nError message\n---------------------------------------\n" + error.errorText);
+    }
+
+
+    // DELETE REMAINING ITEMS - SITES NO LONGER IN COLLECTION
+    $.each(currItemsObj, function(url, obj) {
+      res = spjs_deleteItem({
+        "listName": scmap.lists[1].name,
+        "listBaseUrl": spjs.siteMap.data.listBaseUrl,
+        "id": obj.ID
+      });
+      if (!res.success) {
+        alert("[spjs.siteMap]\n\n" + res.errorText);
+        return false;
+      } else {
+        dCount += 1;
+      }
+    });
+
+    // FINAL RESULTS POP UP
+    alert("SPJS-SiteMap\n\nUpdated: " + uCount + "\nAdded: " + nCount + "\nRemoved: " + dCount);
+
+  }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// PURPOSE:
-//  Examines SPServices xData.responseXML for any errors. At a minimum, it will use this SP.UI framework to display
-//  an error summary in the status bar which can include the name of your function and the SPServices operation for 
-//  troubleshooting in the field and debugging during development. Optionally, it dumps the verbose output from 
-//  $().SPServices.SPDebugXMLHttpResult() to a supplied container
-//
-// NOTE:
-//  It is possible for the "Status" parameter in the completefunc() callback to state "success" and for
-//  xData.statusText to hold "OK" when in fact there are errors. A "Status" of "success" simply means the web 
-//  service call succeeded. It does NOT mean the web service did not return its own error code and message.
-//
-// USAGE:
-//  $(xData).OutputSPError();
-//
-jQuery.fn.OutputSPError = function(options) {
-
-    var opt = $.extend({}, {
-        functionName:   "",             // Name of your javascript function that invoked the SPServices call
-        operationName:  "",             // Name of the SPServices operation, ie: "UpdateListItems"
-        msgContainer:   "#SPServices",  // [OPTIONAL] jQuery selector for HTML container to hold error messages output
-        }, options);
-    
-    // Ensure we were chained to the right object
-    if( typeof($(this).prop("responseXML")) === "undefined" )
-        return;
-
-    var responseXML = $(this).prop("responseXML");
-    if( !$(responseXML).hasSPError() )
-        return;
-    
-    var statusText  = $(this).prop("statusText");
-    var message = "";
-
-    if( opt.functionName != "" || opt.operationName != "" )
-        message = "[" + opt.functionName + "] " + opt.operationName + " :: ";
-
-    // Display the error summary in the status bar
-    var strStatusID = 
-        SP.UI.Status.addStatus(
-            "<img src='/_Layouts/Images/error16by16.gif' align='absmiddle'>&nbsp;" + 
-            message + (statusText != "OK" ? statusText + ":&nbsp;" : "" ) + $(responseXML).getSPErrorText());
-    SP.UI.Status.setStatusPriColor(strStatusID, "yellow");
-
-    // Dump the error details to the caller's message container and unhide it
-    if( $(opt.msgContainer).length != 0 ) {
-        var errorDetails    = $().SPServices.SPDebugXMLHttpResult({node: responseXML});
-        var divStatus       = jQuery("<h1 class='_wsStatusText'></h1>").appendTo(opt.msgContainer);
-        var divError        = jQuery("<div class='_wsError'></div>").appendTo(opt.msgContainer);
-        $(divStatus).text((statusText != "OK" ? statusText : $(responseXML).getSPErrorCode()));
-        $(divError).append("<b>" + message + "</b><br>" + errorDetails);
-        $(opt.msgContainer).show();
-    }
-    return;
-}
-
-
-// PURPOSE:
-//  Given an XML message as returned by the Sharepoint web services API, this method checks for an error
-//
-// RETURNS:
-//  {Boolean} true|false
-//
-// USAGE:
-//  $(xData).hasSPError();
-//  $(xData.responseXML).hasSPError();
-//
-jQuery.fn.hasSPError    = function() {
-
-    // Sometimes a web service will be reachable and the web method will still
-    // return an error code XML node. So we need to check its contents
-    return( $(this).getSPErrorCode() != "0x00000000");
-};/* jQuery.fn.hasSPError() */
-
-
-
-// PURPOSE:
-//  Given an XML message as returned by the Sharepoint web services API, this method
-//  checks if it contains an error and returnS the error code.
-//
-// NOTE:
-//  Sometimes a web service will be reachable and the web method call will succeed with no errors
-//  but it may still return an error code XML node. If so, the node value needs to be checked.
-//  EXAMPLE: UpdateListItems returns "0x00000000" for success
-//
-// RETURNS:
-//  {String} hexidecimal error code
-//
-// USAGE:
-//  $(xData).hasSPError();
-//  $(xData.responseXML).hasSPError();
-//
-jQuery.fn.getSPErrorCode    = function() {
-
-    if( typeof($(this).prop("status")) !== "undefined" && $(this).prop("status") != 200 )
-        return $(this).prop("status").toString();
-    
-    var responseXML = $(this).prop("responseXML");
-    if( typeof($(this).prop("responseXML")) === "undefined" )
-        responseXML = $(this);
-
-    var spErrCode = $(responseXML).find("ErrorCode:first");
-    if( spErrCode.length )
-        return spErrCode.text();
-    
-    spErrCode = $(responseXML).find("errorcode:first");
-    if( spErrCode.length )
-        return spErrCode.text();
-    
-    spErrCode = $(responseXML).find("faultcode");
-    if( spErrCode.length )
-        return spErrCode.text();
-    
-    return "0x00000000";
-};/* jQuery.fn.hasSPError() */
-
-
-
-// PURPOSE:
-// Given a sharepoint webservices response, this method will look to see if it 
-// contains an error and return that error formated as a string.
-//
-// RETURNS:
-//  {String} error message text
-//
-// USAGE:
-//  alert($(xData).getSPError());
-//  alert($(xData.responseXML).getSPError());
-//
-jQuery.fn.getSPErrorText    = function(){
-
-    var responseXML = $(this).prop("responseXML");
-    if( typeof($(this).prop("responseXML")) === "undefined" )
-        responseXML = $(this);
-
-    var errorText   = "Call to Sharepoint web services failed. ";
-    
-    if( $(responseXML).find("ErrorCode:first").text().length ) {
-        errorText += "\n" + $(responseXML).find("ErrorCode:first").text()
-            +   ": " + $(responseXML).find("ErrorText").text();
-    } else if( $(responseXML).find("faultcode").length ) {
-        errorText += $(responseXML).find("faultstring").text()
-            + "\n" + $(responseXML).find("errorstring").text();
-    } else {
-        errorText = "";
-    }
-    return errorText;
-}/* jQuery.fn.getSPError() */
