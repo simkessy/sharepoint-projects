@@ -24,6 +24,9 @@ scmap = {
     collections: [],
     sites: []
   },
+  showButton:function(){ 
+    $("#siteMapBtn").html("<input type='button' onclick='scmap.init()' value='Add or update site map' />"); 
+  }, 
   notice: function(msg) {
     SP.UI.Notify.addNotification(msg, false);
     console.log(msg)
@@ -350,7 +353,7 @@ scmap = {
 
     // REFRESH PAGE 
     location.href = location.href; 
-
   }
 };
 
+scmap.showButton();
