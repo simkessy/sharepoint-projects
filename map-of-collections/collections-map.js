@@ -38,6 +38,7 @@ scmap = {
       .then(scmap.update)
   },
   checkForLists: function() {
+    console.log('checkforlists')
     var dfd = jQuery.Deferred();
     var listCheckPromises = [];
 
@@ -45,7 +46,7 @@ scmap = {
     $.each(scmap.lists, function(i, list) {
       listCheckPromises[i] = $().SPServices({
         operation: "GetList",
-        listName: list.name,
+        listName: list.name
       })
     })
 
@@ -70,6 +71,7 @@ scmap = {
     return dfd.promise();
   },
   createLists: function() {
+    console.log('createlists')
     var createListsPromises = [];
 
     // CREATE BOTH LISTS NEEDED FOR SITE MAP
@@ -97,6 +99,7 @@ scmap = {
     }
   },
   setListColumns: function() {
+    console.log('setListColumns')
     // GO THROUGH LISTS AND CREATE THEIR COLUMNS
     // ADD THOSE COLUMNS TO THE DEFAULT VIEW 
     $.map(scmap.lists, function(list, index) {
@@ -112,6 +115,7 @@ scmap = {
     scmap.notice("Created lists successfully")
   },
   getCollections: function() {
+    console.log('Get SiteCollections')
     var dfd = jQuery.Deferred();
 
     // GET LIST OF ALL SITE COLLECTIONS IN THE SITE COLLECTION CONTAINER 
@@ -147,9 +151,9 @@ scmap = {
     }
 
     return dfd.promise();
-
   },
   getSites: function(collection) {
+    console.log('Get Sites')
     // GET ALL THE SITES FOR EACH COLLECTION
     var sitePromise = $().SPServices({
       operation: "GetAllSubWebCollection",
@@ -190,6 +194,8 @@ scmap = {
     }
   },*/
   update: function() {
+    console.log("Updating...")
+
     var b, webs, thisBaseUrl, p, currItems, currItemsObj, newList, uList, data, res, noChangeCount, uCount, nCount, dCount, error;
 
     // create this object right away in getSites
