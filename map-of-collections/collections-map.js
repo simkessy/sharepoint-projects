@@ -3,7 +3,7 @@ var scmap = scmap || {};
 scmap = {
   author: "Kessy Similien (simkessy@gmail.com)",
   version: 0.1,
-  listBaseUrl: (typeof _spPageContextInfo !== "undefined") ? (_spPageContextInfo.siteServerRelativeUrl !== "/") ? _spPageContextInfo,
+  listBaseUrl: (typeof _spPageContextInfo !== "undefined") ? (_spPageContextInfo.siteServerRelativeUrl !== "/") ? _spPageContextInfo.siteServerRelativeUrl : "" : L_Menu_BaseUrl,
   lists: [
     {
       name: "Site-Map-Collections",
@@ -24,8 +24,8 @@ scmap = {
     collections: [],
     sites: []
   },
-  showButton:function(){ 
-    $("#siteMapBtn").html("<input type='button' onclick='scmap.init()' value='Add or update site map' />"); 
+  showButton: function(){ 
+    $("#siteMapBtn").html("<input type='button' onclick='scmap.init()' value='Add or update site map' />");
   }, 
   notice: function(msg) {
     SP.UI.Notify.addNotification(msg, false);
@@ -54,7 +54,6 @@ scmap = {
 
     // INDICATE THE LISTS EXISTS
     function pass() {
-      var currentList = scmap.lists[index]
       scmap.notice("Lists already exists")
       dfd.resolve();
     }
@@ -62,7 +61,7 @@ scmap = {
     // THE LISTS DO NOT EXISTS
     // CREATE LISTS AND SET COLUMNS
     function fail() {
-      var err = "FAIL:", 'Lists do not exist. Creating...'
+      var err = "FAIL: Lists do not exist. Creating..."
       scmap.notice(err)
       scmap.createLists()
       dfd.resolve();
@@ -137,12 +136,12 @@ scmap = {
     function success() {
       var result = this.data
       // STORE EACH COLLECTION WITH TITLE AND URL PROPERTIES
-      scmap.d.collections = this.data.map(function(sc) {
+      scmap.d.collections =$.map(this.data, function(sc) {
         return {title: sc.title, url: sc.url}
       })
 
       // RETURN ALL SITES FOR EACH COLLECTION
-      scmap.d.collections.map(scmap.getSites)
+      $.map(scmap.d.collections, scmap.getSites)
 
       dfd.resolve();
     }
@@ -194,10 +193,10 @@ scmap = {
     var b, webs, thisBaseUrl, p, currItems, currItemsObj, newList, uList, data, res, noChangeCount, uCount, nCount, dCount, error;
 
     // create this object right away in getSites
-    var webs = {}
+    webs = {}
 
     // process each site
-    scmap.d.sites.map(function(o, i) {
+    $.map(scmap.d.sites, function(o, i) {
 
       //remove http:// + domain
       thisBaseUrl = o.url.replace(location.protocol + "//" + location.host, "");
@@ -224,7 +223,7 @@ scmap = {
         "parent": p,
         "collection": o.collection
       };
-    });
+    })
 
     // GET ALL CURRENT SITES IN SITE-MAP LIST
     currItems = spjs_QueryItems({
@@ -350,9 +349,6 @@ scmap = {
 
     // FINAL RESULTS POP UP
     alert("SPJS-SiteMap\n\nUpdated: " + uCount + "\nAdded: " + nCount + "\nRemoved: " + dCount);
-
-    // REFRESH PAGE 
-    location.href = location.href; 
   }
 };
 
