@@ -33,9 +33,12 @@ scmap = {
   init: function() {
     // check if lists exist
     scmap.checkForLists()
+      .then(scmap.getCollections)
+      .then(scmap.update)
 
   },
   checkForLists: function() {
+    var dfd = jQuery.Deferred();
     var listCheckPromises = [];
 
     // PING THE TWO LISTS WE NEED
@@ -53,21 +56,26 @@ scmap = {
     function pass() {
       var currentList = scmap.lists[index]
       scmap.notice("Lists already exists")
+      dfd.resolve();
     }
 
-    // THE LISTS DO NOT EXISTS, CREATE THEM
+    // THE LISTS DO NOT EXISTS
+    // CREATE LISTS AND SET COLUMNS
     function fail() {
       var err = "FAIL:", 'Lists do not exist. Creating...'
       scmap.notice(err)
       scmap.createLists()
+      dfd.resolve();
     }
+
+    return dfd.promise();
   },
   createLists: function() {
-    var createPromises = [];
+    var createListsPromises = [];
 
     // CREATE BOTH LISTS NEEDED FOR SITE MAP
     $.each(scmap.lists, function(index, list) {
-      createPromises[index] = $().SPServices({
+      createListsPromises[index] = $().SPServices({
         operation: "AddList",
         listName: list.name,
         description: list.description,
@@ -76,7 +84,7 @@ scmap = {
     })
 
     // HANDLE PROMISES RETURNED
-    $.when.apply($, createPromises).then(pass, fail)
+    $.when.apply($, createListsPromises).then(pass, fail)
 
     // SET LIST COLUMNS
     function pass() {
@@ -105,6 +113,8 @@ scmap = {
     scmap.notice("Created lists successfully")
   },
   getCollections: function() {
+    var dfd = jQuery.Deferred();
+
     // GET LIST OF ALL SITE COLLECTIONS IN THE SITE COLLECTION CONTAINER 
     siteCollectionsPromise = $().SPServices.SPGetListItemsJson({
       listName: scmap.lists[0].name,
@@ -134,7 +144,11 @@ scmap = {
       // RETURN ALL SITES FOR EACH COLLECTION
       scmap.d.collections.map(scmap.getSites)
 
+      dfd.resolve();
     }
+
+    return dfd.promise();
+
   },
   getSites: function(collection) {
     // GET ALL THE SITES FOR EACH COLLECTION
