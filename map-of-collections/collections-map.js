@@ -1,113 +1,114 @@
 var scmap = scmap || {};
 
 scmap = {
-	author: "Kessy Similien (simkessy@gmail.com)",
-	lists: [
-		{
-			name: "Site-Map-Collections",
-			description: "This list will contain all site collections for the SPJS Charts",
-			fields: [{'Type':'Note','DisplayName':'URL'}],
-			view: "<ViewFields><FieldRef Name='URL' /></ViewFields>"
-		},{
-			name: "Site-Map",
-			description: "This list is used as datasource for SPJS Charts for SharePoint.",
-			fields: [
-				{'Type':'Note','DisplayName':'CurrentSite'},
-				{'Type':'Note','DisplayName':'Parent'},
-				{'Type':'Note','DisplayName':'URL'},
-				{'Type':'Text','DisplayName':'SiteCollection'}],
-			view: "<ViewFields><FieldRef Name='CurrentSite' /><FieldRef Name='CurrentSite' /><FieldRef Name='Parent' /><FieldRef Name='URL' /><FieldRef Name='SiteCollection' /></ViewFields>"
-	}],
-	d: {
-		collections: {
-			current: [],
-			stored: []
-		},
-		sites: {
-			current: [],
-			stored: []
-		}
-	},
-	notice: function(msg) {
-		SP.UI.Notify.addNotification(msg, false);
-	},
-	errorHandling: {
-		failure: function() { alert("Failed") }
-	},
-	init: function() {
-		// check if lists exist
-		scmap.checkForLists()
+  author: "Kessy Similien (simkessy@gmail.com)",
+  version: 0.1,
+  lists: [
+    {
+      name: "Site-Map-Collections",
+      description: "This list will contain all site collections for the SPJS Charts",
+      fields: [{'Type':'Note','DisplayName':'URL'}],
+      view: "<ViewFields><FieldRef Name='URL' /></ViewFields>"
+    },{
+      name: "Site-Map",
+      description: "This list is used as datasource for SPJS Charts for SharePoint.",
+      fields: [
+        {'Type':'Note','DisplayName':'CurrentSite'},
+        {'Type':'Note','DisplayName':'Parent'},
+        {'Type':'Note','DisplayName':'URL'},
+        {'Type':'Text','DisplayName':'SiteCollection'}],
+      view: "<ViewFields><FieldRef Name='CurrentSite' /><FieldRef Name='CurrentSite' /><FieldRef Name='Parent' /><FieldRef Name='URL' /><FieldRef Name='SiteCollection' /></ViewFields>"
+  }],
+  d: {
+    collections: [],
+    sites: []
+  },
+  notice: function(msg) {
+    SP.UI.Notify.addNotification(msg, false);
+    console.log(msg)
+  },
+  errorHandling: {
+    failure: function() { alert("Failed") }
+  },
+  init: function() {
+    // check if lists exist
+    scmap.checkForLists()
 
-	},
-	checkForLists: function() {
-		var listCheckPromises = [];
+  },
+  checkForLists: function() {
+    var listCheckPromises = [];
 
-		$.each(scmap.lists, function(i, list) {
-			listCheckPromises[i] = $().SPServices({
-				operation: "GetList",
-  			listName: list.name,
-			})
-		})
+    // PING THE TWO LISTS WE NEED
+    $.each(scmap.lists, function(i, list) {
+      listCheckPromises[i] = $().SPServices({
+        operation: "GetList",
+        listName: list.name,
+      })
+    })
 
-		// $.map(listCheckPromises, function(listPromise, index){
-		// 	listPromise.then(pass.bind(null, index), fail.bind(null, index))
-		// })
-
+    // WHEN PROMISES RETURNED
     $.when.apply($, listCheckPromises).then(pass, fail)
 
-		function pass() {
+    // INDICATE THE LISTS EXISTS
+    function pass() {
       var currentList = scmap.lists[index]
-      console.log("PASS:", 'Lists created')
+      scmap.notice("Lists already exists")
     }
 
-    function fail(index) {
-      // var currentList = scmap.lists[index]
-			console.log("FAIL:", 'Lists do not exist. Creating...')
-			scmap.createLists()
-		}
-	},
-	createLists: function() {
-		// store promises in array
-		var createPromises = [];
-		// loop through lists which need to be created
-		$.each(scmap.lists, function(index, list) {
-			createPromises[index] = $().SPServices({
-				operation: "AddList",
-				listName: list.name,
-				description: list.description,
-				templateID: 100
-			})
-		})
+    // THE LISTS DO NOT EXISTS, CREATE THEM
+    function fail() {
+      var err = "FAIL:", 'Lists do not exist. Creating...'
+      scmap.notice(err)
+      scmap.createLists()
+    }
+  },
+  createLists: function() {
+    var createPromises = [];
 
-		// when promises complete, run update lists
+    // CREATE BOTH LISTS NEEDED FOR SITE MAP
+    $.each(scmap.lists, function(index, list) {
+      createPromises[index] = $().SPServices({
+        operation: "AddList",
+        listName: list.name,
+        description: list.description,
+        templateID: 100
+      })
+    })
+
+    // HANDLE PROMISES RETURNED
     $.when.apply($, createPromises).then(pass, fail)
 
-		// error handling on list creation
-		function pass() {
-			console.log("successfully created lists")
-			scmap.setListColumns()
-		}
+    // SET LIST COLUMNS
+    function pass() {
+      var text = 'Created lists, Adding columns...' 
+      scmap.notice(text)
+      scmap.setListColumns()
+    }
 
-		function fail(error) {
-			console.log($(error).getSPErrorCode())
-		}
-	},
-	setListColumns: function() {
-		$.map(scmap.lists, function(list, index) {
-			var updateList = spjs_UpdateList(list.name, L_Menu_BaseUrl, list.fields, [], []);
+    function fail(error) {
+      scmap.notice('failed: ' + $(error).getSPErrorCode())
+    }
+  },
+  setListColumns: function() {
+    // GO THROUGH LISTS AND CREATE THEIR COLUMNS
+    // ADD THOSE COLUMNS TO THE DEFAULT VIEW 
+    $.map(scmap.lists, function(list, index) {
+      var updateList = spjs_UpdateList(list.name, L_Menu_BaseUrl, list.fields, [], []);
 
-			if(!updateList.success) {
-				console.log(updateList.errorText)
-			}else{
-				console.log("Updated list:", list.name)
-			}
-		})
-    console.log('Add site collections to map')
-	},
-	getCollections: function() {
-		siteCollectionsPromise = $().SPServices.SPGetListItemsJson({
-			listName: scmap.lists[0].name,
-			CAMLViewFields: scmap.lists[0].view,
+      // ERROR HANDLING
+      if(!updateList.success) {
+        scmap.notice(updateList.errorText)
+      }else{
+        scmap.notice("Updated list: " + list.name)
+      }
+    })
+    scmap.notice("Created lists successfully")
+  },
+  getCollections: function() {
+    // GET LIST OF ALL SITE COLLECTIONS IN THE SITE COLLECTION CONTAINER 
+    siteCollectionsPromise = $().SPServices.SPGetListItemsJson({
+      listName: scmap.lists[0].name,
+      CAMLViewFields: scmap.lists[0].view,
       mappingOverrides: {
         ows_Title: {
             mappedName: "title",
@@ -118,37 +119,35 @@ scmap = {
             objectType: "Text"
         }
       }
-		})
+    })
 
-		siteCollectionsPromise.then(success, scmap.errorHandling.failure)
+    // HANDLE PROMISE RESPONSE 
+    siteCollectionsPromise.then(success, scmap.notice)
 
-		function success() {
-			var result = this.data
-			// get each collection
-			scmap.d.collections.current = this.data.map(function(sc) {
+    function success() {
+      var result = this.data
+      // STORE EACH COLLECTION WITH TITLE AND URL PROPERTIES
+      scmap.d.collections = this.data.map(function(sc) {
         return {title: sc.title, url: sc.url}
       })
-			// loop through each site collection
-			// get all sites per collection
-      scmap.d.collections.current.map(scmap.getSites)
 
-			// find diff between current list
-			// remove deleted items
-			// add new items
+      // RETURN ALL SITES FOR EACH COLLECTION
+      scmap.d.collections.map(scmap.getSites)
 
-			// or remove all and add new
-			//scmap.getSites();
-		}
-	},
+    }
+  },
   getSites: function(collection) {
+    // GET ALL THE SITES FOR EACH COLLECTION
     var sitePromise = $().SPServices({
       operation: "GetAllSubWebCollection",
       webURL: collection.url,
       completefunc: function(xData, Status) {
         var results = $(xData.responseXML);
+
+        // STORE EACH SITE'S TITLE-URL-COLLECTION
         results.find("Web").each(function() {
           var self = $(this);
-          scmap.d.sites.current.push({
+          scmap.d.sites.push({
             title: self.attr("Title"),
             url: self.attr("Url"),
             collection: collection.title
@@ -157,6 +156,26 @@ scmap = {
       }
     })
   },
+  /*getSites: function(collection) {
+    var sP = $().SPServices({
+      operation: "GetAllSubWebCollection",
+      webURL: collection.url
+    })
+
+    sP.then(pass, scmap.notice)
+
+    function pass() {
+      var results = this.data 
+      results.find("Web").each(function() {
+        var self = $(this);
+        scmap.d.sites.push({
+          title: self.attr("Title"),
+          url: self.attr("Url"),
+          collection: collection.title
+        })
+      })      
+    }
+  },*/
   update: function() {
     var b, webs, thisBaseUrl, p, currItems, currItemsObj, newList, uList, data, res, noChangeCount, uCount, nCount, dCount, error;
 
@@ -223,7 +242,6 @@ scmap = {
 
     $.each(webs, function(url, o) {
       // CREATE ITEM: TITLE - CURRENT - URL - PARENT
-      //// ADD COLLECTION HERE!
       data = {
         "Title": "[...]",
         "CurrentSite": "{\"v\":\"" + url + "\",\"f\":\"<a href='" + url + "' target='_blank'>" + o.title + "</a>\"}",
@@ -237,7 +255,6 @@ scmap = {
       if (currItemsObj[url] !== undefined) {
         // FOUND THE SITE GIVEN URL
         // NOW CHECK IF ALL PROPERTIES ARE UNCHANGED
-        //// SHOULD ADD A CHECK FOR SITE COLLECTION AS WELL
         if (
           (currItemsObj[url].CurrentSite === data.CurrentSite) &&
           (currItemsObj[url].Parent === o.parent) &&
@@ -322,3 +339,4 @@ scmap = {
 
   }
 };
+
