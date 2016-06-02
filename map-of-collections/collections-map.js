@@ -3,6 +3,7 @@ var scmap = scmap || {};
 scmap = {
   author: "Kessy Similien (simkessy@gmail.com)",
   version: 0.1,
+  listBaseUrl: (typeof _spPageContextInfo !== "undefined") ? (_spPageContextInfo.siteServerRelativeUrl !== "/") ? _spPageContextInfo
   lists: [
     {
       name: "Site-Map-Collections",
@@ -27,15 +28,11 @@ scmap = {
     SP.UI.Notify.addNotification(msg, false);
     console.log(msg)
   },
-  errorHandling: {
-    failure: function() { alert("Failed") }
-  },
   init: function() {
     // check if lists exist
     scmap.checkForLists()
       .then(scmap.getCollections)
       .then(scmap.update)
-
   },
   checkForLists: function() {
     var dfd = jQuery.Deferred();
@@ -229,7 +226,7 @@ scmap = {
     // GET ALL CURRENT SITES IN SITE-MAP LIST
     currItems = spjs_QueryItems({
       "listName": scmap.lists[1].name,
-      "listBaseUrl": spjs.siteMap.data.listBaseUrl,
+      "listBaseUrl": scmap.listBaseUrl,
       "query": "<Where><IsNotNull><FieldRef Name='ID' /></IsNotNull></Where>",
       "viewFields": ["ID", "CurrentSite", "Parent", "URL", "SiteCollection"]
     });
@@ -286,7 +283,7 @@ scmap = {
         // REMAINING ITEMS, UPDATES TO BE MADE
         res = spjs_updateItem({
           "listName": scmap.lists[1].name,
-          "listBaseUrl": spjs.siteMap.data.listBaseUrl,
+          "listBaseUrl": scmap.listBaseUrl,
           "id": currItemsObj[url].ID,
           "data": data
         });
@@ -310,7 +307,7 @@ scmap = {
         // UPDATE THE LIST WITH THE NEW ITEM
         res = spjs_addItem({
           "listName": scmap.lists[1].name,
-          "listBaseUrl": spjs.siteMap.data.listBaseUrl,
+          "listBaseUrl": scmap.listBaseUrl,
           "data": data
         });
         if (!res.success) {
@@ -337,7 +334,7 @@ scmap = {
     $.each(currItemsObj, function(url, obj) {
       res = spjs_deleteItem({
         "listName": scmap.lists[1].name,
-        "listBaseUrl": spjs.siteMap.data.listBaseUrl,
+        "listBaseUrl": scmap.listBaseUrl,
         "id": obj.ID
       });
       if (!res.success) {
@@ -350,6 +347,9 @@ scmap = {
 
     // FINAL RESULTS POP UP
     alert("SPJS-SiteMap\n\nUpdated: " + uCount + "\nAdded: " + nCount + "\nRemoved: " + dCount);
+
+    // REFRESH PAGE 
+    location.href = location.href; 
 
   }
 };
