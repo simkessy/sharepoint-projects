@@ -84,6 +84,7 @@ scmap = {
       var text = 'Created lists, Adding columns...'
       scmap.notice(text)
       scmap.setListColumns()
+        .then(scmap.addDefaultCollection)
     }
 
     function fail(error) {
@@ -91,6 +92,7 @@ scmap = {
     }
   },
   setListColumns: function() {
+    var dfd = $.Deferred()
     // GO THROUGH LISTS AND CREATE THEIR COLUMNS
     // ADD THOSE COLUMNS TO THE DEFAULT VIEW
     $.map(scmap.lists, function(list, index) {
@@ -102,8 +104,33 @@ scmap = {
       }else{
         scmap.notice("Updated list: " + list.name)
       }
+
+      if(scmap.lists.length == (index+1)) {
+        dfd.resolve()
+      }
     })
     scmap.notice("Created lists successfully")
+
+    return dfd.promise();
+  },
+  addDefaultCollection: function() {
+    // ADD CURRENT SITE TO SITE COLLECTION
+    var defaultCollectionTitle = _spPageContextInfo.siteServerRelativeUrl.split("/")[2]
+    var defaultCollectionUrl = window.location.protocol + "//" + window.location.host + _spPageContextInfo.siteServerRelativeUrl;
+
+    $().SPServices({
+        operation: "UpdateListItems",
+        batchCmd: "New",
+        listName: scmap.lists[0].name,
+        valuepairs: [["Title", defaultCollectionTitle], ["URL", defaultCollectionUrl]],
+        completefunc: function(xData, Status) {
+          scmap.init();
+        }
+    });
+
+    scmap.notice('Default collection added')
+
+    alert("Ready! \n\nYou will need to add Site Collection links to the Site-Map-Collections list. \n\nThen follow instructions on how to set up the Organization Chart")
   },
   getCollections: function() {
     var dfd = jQuery.Deferred();
