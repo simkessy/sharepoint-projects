@@ -2,13 +2,13 @@ var scmap = scmap || {};
 
 scmap = {
   author: "Kessy Similien (simkessy@gmail.com)",
-  version: 0.1,
+  version: 1,
   listBaseUrl: (typeof _spPageContextInfo !== "undefined") ? (_spPageContextInfo.siteServerRelativeUrl !== "/") ? _spPageContextInfo.siteServerRelativeUrl : "" : L_Menu_BaseUrl,
   lists: [
     {
       name: "Site-Map-Collections",
       description: "This list will contain all site collections for the SPJS Charts",
-      fields: [{'Type':'Note','DisplayName':'URL'}],
+      fields: [{'Type':'Note','DisplayName':'URL','AddToView':true}],
       view: "<ViewFields><FieldRef Name='URL' /></ViewFields>"
     },{
       name: "Site-Map",
@@ -39,11 +39,10 @@ scmap = {
       .then(scmap.update)
   },
   checkForLists: function() {
-    console.log('checkforlists')
     var dfd = jQuery.Deferred();
-    var listCheckPromises = [];
 
     // PING THE TWO LISTS WE NEED
+    var listCheckPromises = [];
     $.each(scmap.lists, function(i, list) {
       listCheckPromises[i] = $().SPServices({
         operation: "GetList",
@@ -66,10 +65,8 @@ scmap = {
     return dfd.promise();
   },
   createLists: function() {
-    console.log('createlists')
-    var createListsPromises = [];
-
     // CREATE BOTH LISTS NEEDED FOR SITE MAP
+    var createListsPromises = [];
     $.each(scmap.lists, function(index, list) {
       createListsPromises[index] = $().SPServices({
         operation: "AddList",
@@ -90,11 +87,10 @@ scmap = {
     }
 
     function fail(error) {
-      scmap.notice('failed: ' + $(error).getSPErrorCode())
+      scmap.notice('Failed to creater lists')
     }
   },
   setListColumns: function() {
-    console.log('setListColumns')
     // GO THROUGH LISTS AND CREATE THEIR COLUMNS
     // ADD THOSE COLUMNS TO THE DEFAULT VIEW
     $.map(scmap.lists, function(list, index) {
@@ -110,7 +106,6 @@ scmap = {
     scmap.notice("Created lists successfully")
   },
   getCollections: function() {
-    console.log('Get SiteCollections')
     var dfd = jQuery.Deferred();
 
     // GET LIST OF ALL SITE COLLECTIONS IN THE SITE COLLECTION CONTAINER
@@ -325,7 +320,9 @@ scmap = {
 
     // FINAL RESULTS POP UP
     scmap.notice("Updated: " + uCount + "\nAdded: " + nCount + "\nRemoved: " + dCount);
-    console.log('Done updating')
   }
 };
 
+$(function(){
+  SP.SOD.executeFunc('sp.js','SP.ClientContext', scmap.showButton);
+})
