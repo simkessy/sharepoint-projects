@@ -35,7 +35,8 @@ scmap = {
     // check if lists exist
     scmap.checkForLists()
       .then(scmap.getCollections)
-      .then(function(update) { update() })
+      .then(scmap.getSites)
+      .then(scmap.update)
   },
   checkForLists: function() {
     console.log('checkforlists')
@@ -138,57 +139,64 @@ scmap = {
         return {title: sc.title, url: sc.url}
       })
 
-      // RETURN ALL SITES FOR EACH COLLECTION
-      $.map(scmap.d.collections, scmap.getSites)
-
-      dfd.resolve(scmap.update);
+      dfd.resolve(scmap.d.collections);
     }
     return dfd.promise();
   },
-  getSites: function(collection) {
-    var getSitePromise = $().SPServices({
-      operation: "GetAllSubWebCollection",
-      webURL: collection.url
+  getSites: function(collections) {
+    console.log("getSites")
+    var dfd = $.Deferred()
+
+    // RETURN ALL SITES FOR EACH COLLECTION
+    var getSitesPromises = [];
+    $.map(collections, function(collection, index) {
+      getSitesPromises[index] = $().SPServices({
+        operation: "GetAllSubWebCollection",
+        webURL: collection.url
+      })
     })
 
-    getSitePromise.then(pass, scmap.notice)
+    $.when.apply($, getSitesPromises).then(pass, scmap.notice)
 
-    function pass(response) {
-      // ALL SITES FOR A COLLECTION
-      var results = $(response)
+    function pass() {
+      $.map(getSitesPromises, function(response, index) {
+        var result = $(response.responseText)
+        var collectionName = scmap.d.collections[index].title
 
-      var processSite = function() {
-        var self = $(this);
+        var processSite = function() {
+          var self = $(this);
 
-        var thisBaseUrl = self.attr("Url").replace(location.protocol + "//" + location.host, "");
+          var thisBaseUrl = self.attr("Url").replace(location.protocol + "//" + location.host, "");
 
-        // if there's nothing (root site), give it "/"
-        if (thisBaseUrl === "") {
-          thisBaseUrl = "/";
+          // if there's nothing (root site), give it "/"
+          if (thisBaseUrl === "") {
+            thisBaseUrl = "/";
+          }
+
+          //remove http:// + domain
+          var p = self.attr("Url").replace(location.protocol + "//" + location.host, "");
+
+          // get parent by removing everything after last "/"
+          p = p.substring(0, p.lastIndexOf("/"));
+
+          // if no parent, set parent to root
+          if (p === "") {
+            p = "/";
+          }
+
+          // build object with each site title and parent
+          scmap.d.sites[thisBaseUrl] = {
+            "title": self.attr("Title"),
+            "parent": p,
+            "collection": collectionName
+          };
         }
 
-        //remove http:// + domain
-        var p = self.attr("Url").replace(location.protocol + "//" + location.host, "");
-
-        // get parent by removing everything after last "/"
-        p = p.substring(0, p.lastIndexOf("/"));
-
-        // if no parent, set parent to root
-        if (p === "") {
-          p = "/";
-        }
-
-        // build object with each site title and parent
-        scmap.d.sites[thisBaseUrl] = {
-          "title": self.attr("Title"),
-          "parent": p,
-          "collection": collection.title
-        };
-      }
-
-      // SEND EACH WEB TO PROCESSING AND STORAGE
-      results.find("Web").map(processSite)
+        result.find("Web").map(processSite)
+      })
+      dfd.resolve()
     }
+    return dfd.promise();
   },
   update: function() {
     console.log("Updating...")
