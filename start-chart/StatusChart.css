@@ -1,0 +1,47 @@
+  /*--Fix Bootstrap Changes--*/
+* {
+	box-sizing: content-box !important;
+}
+.custom * {
+	box-sizing: border-box !important;
+}
+body {
+	font-size: 12px !important;
+}
+
+ /*--Hide Quick Launch --*/
+ .hideSWSAnnouncement {
+	display:none;
+ }
+
+/* Table styling */
+.table-container {
+	margin: 10px 30px;
+}
+thead th {
+	font-size:10px;
+}
+
+/*-- TABLE STYLING --*/
+th,
+td.project,
+td.info {
+	border-top: 1px solid #ddd !important;
+	border: 1px solid #ddd;
+}
+
+td.active-project {
+	border: 1px solid #ddd;
+	cursor: pointer;
+}
+
+td.active-project:hover {
+	color: red;
+}
+th.project {
+	background-color: #fff3a2;
+}
+
+.stages .info {
+	background-color: #f6d48b !important;
+}
