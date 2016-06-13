@@ -1,0 +1,109 @@
+/* Fix Bootstrap Changes */
+* {
+	box-sizing: content-box !important;
+}
+.custom * {
+	box-sizing: border-box !important;
+}
+body {
+	font-family: Verdana, Arial, sans-serif !important;
+	font-size: 8pt !important;
+	/*display: none;*/
+}
+
+/* Hide Quick Launch  */
+#s4-leftpanel{
+	display: none;
+}
+.s4-ca{
+	margin-left: 0px;
+}
+
+/* Hide DND header  */
+.hideSWSAnnouncement {
+	display: none;
+}
+
+/* Hide Library Tools and Site Actions  */
+#s4-ribbonrow {
+	display: none;
+}
+.show-tools {
+	display: inherit !important;
+}
+/* Hide top links and search  */
+#s4-topheader2 {
+	display: none;
+}
+/* Hide social items  */
+.s4-socialdata-notif {
+	display: none;
+}
+
+/* Hide ECB (Context Menu on hover) */
+.s4-ctx { 
+	display: none; 
+}
+
+.ms-ppright {
+	width: 100%;
+}
+
+/* Hide Web Part outline */
+.s4-wpActive .s4-wpTopTable, 
+.s4-wpActive .ms-WPSelected {
+	border: none !important;
+}
+
+/* Custom */
+.dlc-classes {
+	text-transform: uppercase;!important;
+}
+.dlc-classes:hover {
+	cursor: pointer;
+	text-decoration: none !important;
+	
+}
+.ms-bodyareacell {
+	margin: 10px;
+}
+
+/* Style buttons on intro page */
+.nav-btn {
+	display: none;
+}
+
+/*stephane sylvester commented next lines out */
+/*.btn-dlc img:hover {
+	background-color: yellow !important;
+}
+*/
+
+.nav-btn a,
+.nav-btn a:hover, 
+.nav-btn a:visited{
+	color: white !important;
+	text-decoration: none !important;
+	outline: none !important;
+}
+
+#new-btn,
+#settings-btn {
+	border-radius: 100px;
+	border: 1px solid #D7D7D7;
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	margin-right: 20px;
+	margin-bottom: 20px;
+	color: #D7D7D7; 
+}
+
+#new-btn {
+	margin-right: 62px;
+}
+
+#new-btn:hover,
+#settings-btn:hover {
+	color: black;
+}

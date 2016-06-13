@@ -1,0 +1,82 @@
+<head>
+	<script type="text/javascript" src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/bundle/es5-shim.min.js"></script>
+	<script type="text/javascript" src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/bundle/bundle.js"></script>
+	<script src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/placeholders.min.js"></script> 	
+	
+	<!-- Needs to be below to have effect on html above -->
+	<script src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/dlc.js" type="text/javascript"></script> 
+	<script src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/dlc-permission-check.js" type="text/javascript"></script>
+
+	<link rel="stylesheet" type="text/css" href="/sites/HRC-CORE/EPLR/DLC/SiteAssets/dlc-styling.css">
+
+
+</head>
+<body>
+	<!-- SEARCH INPUTS-->
+	<div class="row custom text-center" style="margin-bottom: 10px; margin-top:5px;">
+		
+		<!-- SEARCH FILTER -->
+		<div class="col-xs-3">
+			<div class="input-group">
+				<span class="input-group-btn">
+					<button class="btn btn-default pop" type="button"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+				</span>
+				<input id="filterInput" class="form-control" data-placeholder-en="Search by Title" data-placeholder-fr="Recherche par titre" />
+			</div><!-- /input-group -->
+		</div>
+
+
+		<!-- TOPIC FILTER -->
+		<div class="col-xs-3">
+			<div class="input-group">
+				<span class="input-group-btn">
+					<button class="btn btn-default popover-topic" type="button" data-toggle="popover" title="Sujets" data-content="Filtrer les résultats ci-dessous par sujet d’intérét."><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></button>
+				</span>
+				<select id="topicSelect" class="form-control">
+					<option selected="selected" disabled>Choisir un sujet...</option>
+				</select>
+			</div><!-- /input-group -->
+		</div>
+
+		<!-- COMMUITY FILTER -->
+		<div class="col-xs-3">
+			<div class="input-group">
+				<span class="input-group-btn">
+					<button class="btn btn-default popover-community" type="button" data-toggle="popover" title="Communauté" data-content="Filtrer les résultats ci-dessous par communauté d’intérêt."><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></button>
+				</span>
+				<select id="communitySelect" class="form-control">
+					<option selected="selected" disabled>Choisir une communauté...</option>
+				</select>
+			</div><!-- /input-group -->
+		</div>
+
+		<!-- DELIVERY FILTER -->
+		<div class="col-xs-3">
+			<div class="input-group">
+				<span class="input-group-btn">
+					<button class="btn btn-default popover-delivery" type="button" data-toggle="popover" title="Mode de livraison" data-content="Filtrer les résultats ci-dessous par mode de livraison."><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></button>
+				</span>
+				<select id="deliverySelect" class="form-control">
+					<option selected="selected" disabled>Choisir un mode de livraison...</option>
+				</select>
+			</div><!-- /input-group -->
+		</div>
+	</div>
+
+	<!-- ACTION BUTTONS -->
+	<div class="row custom text-right" style="margin-bottom:0px; margin-top:5px;">
+		<div class="col-xs-12">
+			<div class="btn-group" role="group" aria-label="...">
+				<button type="button" id="resetBtn" class="btn btn-info" style="border-radius:0px" title="Reset Results"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></button>
+				<button type="button" id="searchBtn" class="btn btn-primary" style="border-radius:0px">Filtrer</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- MENU -->
+	<a id="new-btn" title="Add new class" class="btn hidden" href="/sites/HRC-CORE/EPLR/DLC/DLC_Classes/Forms/template.xsn"><i class="fa fa-plus fa-fw"></i></a>
+	<a id="settings-btn" title="Access site settings" class="btn hidden" href="/sites/HRC-CORE/EPLR/DLC/_layouts/settings.aspx" target="_blank"><i class="fa fa-gear fa-fw"></i></a>
+
+
+</body>
+

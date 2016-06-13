@@ -1,0 +1,47 @@
+
+<head>
+	<script type="text/javascript" src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/bundle/es5-shim.min.js"></script>
+	<script type="text/javascript" src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/bundle/bundle.js"></script>
+	<script src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/dlc-permission-check.js" type="text/javascript"></script> 
+	<link rel="stylesheet" type="text/css" href="/sites/HRC-CORE/EPLR/DLC/SiteAssets/dlc-styling.css">
+
+	<!-- SHOW SETTINGS BUTTON IF USER HAS PERMISSIOS -->
+	<script type="text/javascript">
+		$(function(){
+			// Show navigation buttons
+			isEnglish = ( window.location.href.split("/")[8]  == "English.aspx") ? true : false; 
+
+			if (isEnglish) {
+				$("#nav-en").fadeIn("slow");
+			}else{
+				$("#nav-fr").fadeIn("slow");
+			}
+		})
+	</script>
+</head>
+<body>
+	<div class="nav-btn-container">
+		<div id="nav-en" class="nav-btn">
+			<a class="btn-dlc" href="/sites/HRC-CORE/EPLR/DLC/DLC_Classes/Forms/publicEN.aspx?lang=en">
+				<img src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/images/civ_btn_en.png">
+			</a>
+
+			<a class="btn-dlc" href="/sites/HRC-CORE/EPLR/DLC/DLC_Classes/Forms/militaryEN.aspx?lang=en">
+				<img src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/images/mil_btn_en.png">
+			</a>
+
+		</div>
+		<div id="nav-fr" class="nav-btn">
+			<a class="btn-dlc"  href="/sites/HRC-CORE/EPLR/DLC/DLC_Classes/Forms/publicFR.aspx?lang=fr">
+				<img src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/images/civ_btn_fr.png">
+			</a>
+			<a class="btn-dlc" href="/sites/HRC-CORE/EPLR/DLC/DLC_Classes/Forms/militaryFR.aspx?lang=fr">
+				<img src="/sites/HRC-CORE/EPLR/DLC/SiteAssets/images/mil_btn_fr.png">
+			</a>
+		</div>
+	</div>
+
+	<!-- MENU -->
+	<a id="new-btn" title="Add new class" class="btn hidden" href="/sites/HRC-CORE/EPLR/DLC/DLC_Classes/Forms/template.xsn"><i class="fa fa-plus fa-fw"></i></a>
+	<a id="settings-btn" title="Access site settings" class="btn hidden" href="/sites/HRC-CORE/EPLR/DLC/_layouts/settings.aspx" target="_blank"><i class="fa fa-gear fa-fw"></i></a>
+</body>

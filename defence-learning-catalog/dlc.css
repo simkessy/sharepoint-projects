@@ -1,0 +1,23 @@
+#s4-leftpanel {
+	display: none
+}
+.s4-ca {
+	margin-left: 0px
+}
+.hideSWSAnnouncement {
+	display: none
+}
+
+/* Hide Library Tools and Site Actions  */
+#s4-ribbonrow {
+	display: inherit;
+}
+
+/* Hide top links and search  */
+#s4-topheader2 {
+	display: none;
+}
+/* Hide social items  */
+.s4-socialdata-notif {
+	display: none;
+}
