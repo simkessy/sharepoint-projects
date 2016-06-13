@@ -1,1 +1,1 @@
-﻿# Repositoty of SharePoint Solutions or notes
+﻿# Repository of SharePoint solutions or notes
