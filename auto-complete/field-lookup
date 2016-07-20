@@ -58,15 +58,14 @@
       $(function() {
 
         // Set variables
-        var lookup = $("input[title='CCTS_Lookup']");
+        var lookup = $("input[title='E-Class Tracking Number']");
 
         var status = $("#ccts-status");
         var submitted = $("#ccts-submitted");
         var comments = $("#ccts-comments");
 
         var data = [];
-        window.data = data
-          // Get CCTS Items
+        // Get CCTS Items
         var getIDs = $().SPServices.SPGetListItemsJson({
           webURL: "/sites/HRC-CORE/J-and-C/CCTS%20Log",
           listName: "CCTS Log",
@@ -97,7 +96,8 @@
           $.map(ccts_data, function(item) {
             data.push({
               label: item.id,
-              value: item.status,
+              value: item.id,
+              status: item.status,
               comments: item.comments,
               submitted: moment(item.submitted).format("MMMM Do, YYYY hh:mm A")
             })
@@ -108,13 +108,14 @@
         // Activate Lookup
         lookup.autocomplete({
           source: data,
-          select: function(event, ui) {
+          close: function(event, ui) {
             event.preventDefault();
-            lookup.val(ui.item.label)
 
-            status.text(ui.item.value)
-            submitted.text(ui.item.submitted)
-            comments.html(ui.item.comments)
+            var item = data.find(function(item) { return item.value == lookup.val() })
+
+            status.text(item.status + " (ID: " + item.label + ")")
+            submitted.text(item.submitted)
+            comments.html(item.comments)
           },
           focus: function(event, ui) {
             event.preventDefault();
@@ -125,13 +126,11 @@
         // Check if CCTS_ID already filled (in edit mode)
         var checkIfEditForm = function() {
           if (lookup.val()) {
-            console.log(lookup.val())
+            //console.log(lookup.val())
 
-            var item = window.data.find(function(item) {
-              return item.label == lookup.val()
-            })
+            var item = data.find(function(item) { return item.value == lookup.val() })
 
-            console.log(item)
+            //console.log(item)
 
             status.text(item.value)
             submitted.text(item.submitted)
@@ -140,10 +139,10 @@
         }
 
         // Display status on change
-        lookup.change(function() {
-          var currentStatus = $(this).val()
-          console.log(currentStatus)
-        })
+        // lookup.change(function() {
+        //   var currentStatus = $(this).val()
+        //   //console.log(currentStatus)
+        // })
 
 
       })
