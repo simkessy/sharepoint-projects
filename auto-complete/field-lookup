@@ -1,0 +1,157 @@
+/*
+* The purpose of this project was to change an existing text field into a dropdown 
+* that was populated with the ID of items from a different list in a different site collection, same domain.
+* Once the items were retried an a ID was selected, columns from the selected values would be displayed in the aspx form
+*/
+
+<html>
+
+  <head>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
+
+    <style>
+      .ui-autocomplete {
+        max-height: 100px;
+        overflow-y: auto;
+        /* prevent horizontal scrollbar */
+        overflow-x: hidden;
+      }
+      /* IE 6 doesn't support max-height   * we use height instead, but this forces the menu to always be this tall   */
+      
+      * html .ui-autocomplete {
+        height: 100px;
+      }
+
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.SPServices/2014.02/jquery.SPServices.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js"></script>
+    <script type="text/javascript">
+      // https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Array/find
+      if (!Array.prototype.find) {
+        Array.prototype.find = function(predicate) {
+          if (this == null) {
+            throw new TypeError('Array.prototype.find called on null or undefined');
+          }
+          if (typeof predicate !== 'function') {
+            throw new TypeError('predicate must be a function');
+          }
+          var list = Object(this);
+          var length = list.length >>> 0;
+          var thisArg = arguments[1];
+          var value;
+
+          for (var i = 0; i < length; i++) {
+            value = list[i];
+            if (predicate.call(thisArg, value, i, list)) {
+              return value;
+            }
+          }
+          return undefined;
+        };
+      }
+
+    </script>
+    <script type="text/javascript">
+      $(function() {
+
+        // Set variables
+        var lookup = $("input[title='CCTS_Lookup']");
+
+        var status = $("#ccts-status");
+        var submitted = $("#ccts-submitted");
+        var comments = $("#ccts-comments");
+
+        var data = [];
+        window.data = data
+          // Get CCTS Items
+        var getIDs = $().SPServices.SPGetListItemsJson({
+          webURL: "/sites/HRC-CORE/J-and-C/CCTS%20Log",
+          listName: "CCTS Log",
+          CAMLViewFields: "<ViewFields><FieldRef Name='ID' /><FieldRef Name='Status' /><FieldRef Name='Created' /><FieldRef Name='Comments' /></ViewFields>",
+          mappingOverrides: {
+            ows_ID: {
+              mappedName: "id",
+              objectType: "Text"
+            },
+            ows_Status: {
+              mappedName: "status",
+              objectType: "Text"
+            },
+            ows_Comments: {
+              mappedName: "comments",
+              objectType: "Text"
+            },
+            ows_Created: {
+              mappedName: "submitted",
+              objectType: "Date"
+            }
+          }
+        });
+
+        // Store item IDs and Status in array
+        getIDs.then(function() {
+          ccts_data = this.data;
+          $.map(ccts_data, function(item) {
+            data.push({
+              label: item.id,
+              value: item.status,
+              comments: item.comments,
+              submitted: moment(item.submitted).format("MMMM Do, YYYY hh:mm A")
+            })
+          })
+          checkIfEditForm();
+        })
+
+        // Activate Lookup
+        lookup.autocomplete({
+          source: data,
+          select: function(event, ui) {
+            event.preventDefault();
+            lookup.val(ui.item.label)
+
+            status.text(ui.item.value)
+            submitted.text(ui.item.submitted)
+            comments.html(ui.item.comments)
+          },
+          focus: function(event, ui) {
+            event.preventDefault();
+            lookup.val(ui.item.label)
+          }
+        })
+
+        // Check if CCTS_ID already filled (in edit mode)
+        var checkIfEditForm = function() {
+          if (lookup.val()) {
+            console.log(lookup.val())
+
+            var item = window.data.find(function(item) {
+              return item.label == lookup.val()
+            })
+
+            console.log(item)
+
+            status.text(item.value)
+            submitted.text(item.submitted)
+            comments.html(item.comments)
+          }
+        }
+
+        // Display status on change
+        lookup.change(function() {
+          var currentStatus = $(this).val()
+          console.log(currentStatus)
+        })
+
+
+      })
+
+    </script>
+  </head>
+
+  <body>
+  </body>
+
+</html>
