@@ -28,6 +28,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.SPServices/2014.02/jquery.SPServices.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js"></script>
+    
+    /* Because I'm working with SP2010 therefore IE8 mode, I need to polyfill Array.find into the browser */
     <script type="text/javascript">
       // https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Array/find
       if (!Array.prototype.find) {
@@ -54,17 +56,23 @@
       }
 
     </script>
+    
+    
     <script type="text/javascript">
       $(function() {
 
-        // Set variables
+        // Set lookup variable
         var lookup = $("input[title='E-Class Tracking Number']");
-
+        
+        // Set fields I want to populate on look up selection 
         var status = $("#ccts-status");
         var submitted = $("#ccts-submitted");
         var comments = $("#ccts-comments");
 
+        // Array which will contain final results
         var data = [];
+        
+        
         // Get CCTS Items
         var getIDs = $().SPServices.SPGetListItemsJson({
           webURL: "/sites/HRC-CORE/J-and-C/CCTS%20Log",
@@ -102,17 +110,21 @@
               submitted: moment(item.submitted).format("MMMM Do, YYYY hh:mm A")
             })
           })
+          
+          // Check if we're in edit form, if so, display values for preselected ID
           checkIfEditForm();
         })
 
-        // Activate Lookup
+        // Activate jQuery Lookup
         lookup.autocomplete({
           source: data,
           close: function(event, ui) {
             event.preventDefault();
-
+            
+            // Take input field ID, compare with results results, return item matching ID
             var item = data.find(function(item) { return item.value == lookup.val() })
-
+            
+            // Update values from selected item
             status.text(item.status + " (ID: " + item.label + ")")
             submitted.text(item.submitted)
             comments.html(item.comments)
@@ -126,24 +138,13 @@
         // Check if CCTS_ID already filled (in edit mode)
         var checkIfEditForm = function() {
           if (lookup.val()) {
-            //console.log(lookup.val())
-
             var item = data.find(function(item) { return item.value == lookup.val() })
-
-            //console.log(item)
 
             status.text(item.value)
             submitted.text(item.submitted)
             comments.html(item.comments)
           }
         }
-
-        // Display status on change
-        // lookup.change(function() {
-        //   var currentStatus = $(this).val()
-        //   //console.log(currentStatus)
-        // })
-
 
       })
 
