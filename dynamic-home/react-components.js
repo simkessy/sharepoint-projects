@@ -1,38 +1,64 @@
-let items = [
-	{ title: 'Matthew', link: 'https://bible.com/1/mat.1' },
-	{ title: 'Mark', link: 'https://bible.com/1/mrk.1' },
-	{ title: 'Luke', link: 'https://bible.com/1/luk.1' },
-	{ title: 'John', link: 'https://bible.com/1/jhn.1' }
-];
-
+// SLIDER COMPONENT
 let SliderTabs = React.createClass({
 	getInitialState: function() {
-		return <p>Loading data...</p>
+		// Set default state so you don't get an error when data is not ready
+		return {items:[]}
+	},
+	componentDidMount: function() {
+		// Keep the scope of this function so it can be used in checkFlag
+		let that = this;
+
+		// Check home.ready recursively 
+		function checkFlag() {
+	    if(home.ready == false) {
+	      window.setTimeout(checkFlag, 100); 
+	    } else {
+				that.setState({items: home.data.slider})
+	    }
+		}
+		checkFlag();
 	},
 	render: function() {
-		let listItems = home.data.slider
-
-		if(items.length != 0) 
-			listItems = this.props.items.map(function(item) {
-				return (
-					<li key={item.title}>
-						<a href="#panel1">{item.title}</a>
-					</li>
+		// Handle navigation tabs
+		let listTabs = this.state.items.map(function(item, index) {
+			return (
+				<li key={item.title} className={(index==0) ? "active":""}>
+					<a href={"#panel" + (++index)}>{item.title}</a>
+				</li>
 				);
-			});
-		
+		});
 
-	return (
-			<div className="something">
-				<h3>Some content</h3>
-					<ul>
-						{listItems}
+		// Handle slides
+		let listSlides = this.state.items.map(function(item, index) {
+			return (
+					<div key={item.title} role="tabpanel" id={"panel" + (++index)} className={(index==1) ? "in fade":"out fade"}>
+						<a href={item.url}>
+							<figure>
+								<img src={item.path}/>
+								<figcaption>
+									<p>{item.description}</p>
+								</figcaption>
+							</figure>
+						</a>
+					</div>
+				);
+		});
+
+		return (
+			<section>
+				<h3>React Version</h3>
+				<div className="wb-tabs carousel-s2">
+					<ul role="tablist">
+						{listTabs}
 					</ul>
-			</div>
+					<div className="tabpanels">
+						{listSlides}		
+					</div>
+				</div>
+			</section>
 		);
 	}
 });
 
-ReactDOM.render(<SliderTabs items={home.data.slider} />, 				
-	document.getElementById('slider-tabs'));
-
+ReactDOM.render(<SliderTabs/>, 
+	document.getElementById('home-slider'));
