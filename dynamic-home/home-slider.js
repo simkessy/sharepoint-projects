@@ -60,5 +60,7 @@ let SliderTabs = React.createClass({
 	}
 });
 
-ReactDOM.render(<SliderTabs/>, 
-	document.getElementById('home-slider'));
+ReactDOM.render(
+	<SliderTabs/>, 
+	document.getElementById('home-slider')
+);
