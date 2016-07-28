@@ -13,7 +13,7 @@ let SliderTabs = React.createClass({
 	    if(home.ready == false) {
 	      window.setTimeout(checkFlag, 100); 
 	    } else {
-				that.setState({items: home.data.slider})
+				that.setState({items: that.props.data})
 	    }
 		}
 		checkFlag();
@@ -46,7 +46,7 @@ let SliderTabs = React.createClass({
 
 		return (
 			<section>
-				<h3>React Version</h3>
+				<h3>Slider</h3>
 				<div className="wb-tabs carousel-s2">
 					<ul role="tablist">
 						{listTabs}
@@ -61,6 +61,6 @@ let SliderTabs = React.createClass({
 });
 
 ReactDOM.render(
-	<SliderTabs/>, 
+	<SliderTabs data={home.data.slider}/>, 
 	document.getElementById('home-slider')
 );
