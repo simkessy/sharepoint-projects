@@ -1,134 +1,3 @@
-let data = [{
-  "isActive": true,
-  "balance": "$2,238.93",
-  "age": 28,
-  "tab": "Tab C",
-  "name": "Kinney Stephenson",
-  "gender": "male",
-  "favoriteFruit": "banana"
-  }, {
-    "isActive": false,
-    "balance": "$3,611.45",
-    "age": 27,
-    "tab": "Tab B",
-    "name": "Merrill Spears",
-    "gender": "male",
-    "favoriteFruit": "banana"
-  }, {
-    "isActive": false,
-    "balance": "$3,514.76",
-    "age": 22,
-    "tab": "Tab A",
-    "name": "Mabel Mclean",
-    "gender": "female",
-    "favoriteFruit": "strawberry"
-  }, {
-    "isActive": true,
-    "balance": "$2,737.31",
-    "age": 25,
-    "tab": "Tab B",
-    "name": "Roberson Santana",
-    "gender": "male",
-    "favoriteFruit": "apple"
-  }, {
-    "isActive": true,
-    "balance": "$1,834.62",
-    "age": 30,
-    "tab": "Tab C",
-    "name": "Maxwell Cantrell",
-    "gender": "male",
-    "favoriteFruit": "banana"
-  }, {
-    "isActive": false,
-    "balance": "$1,056.87",
-    "age": 33,
-    "tab": "Tab A",
-    "name": "Oneill Williamson",
-    "gender": "male",
-    "favoriteFruit": "banana"
-  }, {
-    "isActive": false,
-    "balance": "$1,730.27",
-    "age": 28,
-    "tab": "Tab A",
-    "name": "Murphy Fowler",
-    "gender": "male",
-    "favoriteFruit": "banana"
-  }, {
-    "isActive": true,
-    "balance": "$3,000.49",
-    "age": 22,
-    "tab": "Tab B",
-    "name": "Christa Dixon",
-    "gender": "female",
-    "favoriteFruit": "strawberry"
-  }, {
-    "isActive": true,
-    "balance": "$2,662.55",
-    "age": 35,
-    "tab": "Tab C",
-    "name": "Warren Hartman",
-    "gender": "male",
-    "favoriteFruit": "strawberry"
-  }, {
-    "isActive": false,
-    "balance": "$1,388.62",
-    "age": 36,
-    "tab": "Tab A",
-    "name": "Holmes Leblanc",
-    "gender": "male",
-    "favoriteFruit": "strawberry"
-  }, {
-    "isActive": true,
-    "balance": "$2,302.03",
-    "age": 40,
-    "tab": "Tab A",
-    "name": "Christie Adkins",
-    "gender": "female",
-    "favoriteFruit": "strawberry"
-  }, {
-    "isActive": true,
-    "balance": "$2,350.43",
-    "age": 31,
-    "tab": "Tab C",
-    "name": "English Horne",
-    "gender": "male",
-    "favoriteFruit": "strawberry"
-  }, {
-    "isActive": false,
-    "balance": "$1,078.39",
-    "age": 24,
-    "tab": "Tab C",
-    "name": "Lavonne Wynn",
-    "gender": "female",
-    "favoriteFruit": "strawberry"
-  }, {
-    "isActive": true,
-    "balance": "$3,434.95",
-    "age": 39,
-    "tab": "Tab C",
-    "name": "Wilder Mccray",
-    "gender": "male",
-    "favoriteFruit": "banana"
-  }, {
-    "isActive": false,
-    "balance": "$2,568.57",
-    "age": 32,
-    "tab": "Tab C",
-    "name": "Moon Padilla",
-    "gender": "male",
-    "favoriteFruit": "banana"
-  }, {
-    "isActive": true,
-    "balance": "$1,448.46",
-    "age": 32,
-    "tab": "Tab A",
-    "name": "Fowler Wilkins",
-    "gender": "male",
-    "favoriteFruit": "banana"
-  }
-]
-
 class HomeNav extends React.Component {
 
   constructor(props) {
@@ -138,9 +7,17 @@ class HomeNav extends React.Component {
 
   componentDidMount() {
     // Keep the scope of this function so it can be used in checkFlag
-    this.setState({
-      data: data
-    })
+    let that = this;
+
+    // Check home.ready recursively 
+    function checkFlag() {
+      if(home.ready == false) {
+        window.setTimeout(checkFlag, 100); 
+      } else {
+        that.setState({data: that.props.data})
+      }
+    }
+    checkFlag();
   }
 
   render() {
@@ -148,14 +25,15 @@ class HomeNav extends React.Component {
     let uniqueTabs = _.uniq(_.map(data, x => x.tab)).sort()
 
     let tabs = uniqueTabs.map((tab, index) => {
+      let itemsByTab = _.filter(data, (x => x.tab == tab) )
       return (
-        <Tabs key={tab} tab={tab} index={index} data={data}/>
+        <Tabs key={tab} tab={tab} index={index} data={itemsByTab}/>
       )
     })
 
     return (
       <section>
-        <h3>Home Nav</h3>
+        <h3>Tabs</h3>
         <div className="wb-tabs">
           <div className="tabpanels">
             {tabs}
@@ -184,7 +62,7 @@ class Tabs extends React.Component {
   render() {
     let {tab, index, data} = this.state;
     let itemsInCurrentTab = _.filter(data, x => x.tab == tab);
-    let uniqueSections = _.uniq(_.map(itemsInCurrentTab, x => x.isActive)).sort()
+    let uniqueSections = _.uniq(_.map(itemsInCurrentTab, x => x.section)).sort()
 
     return (
       <details key={tab} id={"details-panel" + (++index)}>
@@ -211,15 +89,14 @@ class Section extends React.Component {
   }
 
   render() {
-    //let that = this; 
     let {tab, sections, data} = this.state
     let Sections = sections.map(function(section,index) {
-      //data = _.filter(that.data, (x => (x.isActive == section)))
+      let itemsByTabSection = _.filter(data, (x => (x.section == section)))
       
       return(
         <div key={section} className="col-md-9">
           <h2 className="bg-corp-med  h5">{String(section)}</h2>
-            <Links key={tab + "-" + section} tab={tab} section={section} data={data}/>
+            <Links key={tab + "-" + section} tab={tab} section={section} data={itemsByTabSection}/>
         </div>
       )
     })
@@ -248,9 +125,9 @@ class Links extends React.Component {
     let Links = items.map((link, index) => {
       return(
         <li key={link+tab+index}>
-          <a href={link.gender}>
+          <a href={link.url} target="_blank">
             <strong>
-              <span className="small">{link.name}</span>
+              <span className="small">{link.title}</span>
             </strong>
           </a>
         </li>
@@ -261,6 +138,6 @@ class Links extends React.Component {
 };
 
 ReactDOM.render(
-  <HomeNav/>,
+  <HomeNav data={home.data.nav}/>,
   document.getElementById('home-nav')
 );
