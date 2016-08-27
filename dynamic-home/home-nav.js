@@ -8,10 +8,10 @@ class HomeNav extends React.Component {
   componentDidMount() {
     // Keep the scope of this function so it can be used in checkFlag
     let that = this;
-    // Check home.ready recursively 
+    // Check home.ready recursively
     function checkFlag() {
       if(home.ready == false) {
-        window.setTimeout(checkFlag, 100); 
+        window.setTimeout(checkFlag, 100);
       } else {
         that.setState({data: that.props.data});
       }
@@ -44,7 +44,7 @@ const Tabs = ({ tab, index, data }) => {
     let itemsInCurrentTab = _.filter(data, x => x.tab == tab);
     let uniqueSections = _.uniq(_.map(itemsInCurrentTab, x => x.section)).sort();
 
-    return ( 
+    return (
         <details key={tab} id={"details-panel"+(++index)}>
             <summary> {tab} </summary>
             <Section key={tab + index} tab={tab} sections={uniqueSections} data={itemsInCurrentTab}/>
