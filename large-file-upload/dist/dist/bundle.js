@@ -10181,13 +10181,15 @@
 	      url: url,
 	      type: 'POST',
 	      data: data,
+	      processData: false,
+	      async: false,
 	      headers: {
 	        "accept": "application/json;odata=verbose",
-	        "X-RequestDigest": Upload.digest
+	        "X-RequestDigest": Upload.digest,
+	        "content-type": "application/x-www-urlencoded; charset=UTF-8"
 	      }
 	    });
 	  },
-	
 	  init: function init() {
 	    var _this = this;
 	
@@ -10195,47 +10197,36 @@
 	      _this.file = $(_this)["0"].fileInput["0"].files["0"];
 	      _this.filePath = _this.folderPath + _this.file.name;
 	    });
-	
 	    this.button.click(function () {
 	      Upload.getFile().then(function (response) {
 	        return console.log(response);
 	      });
 	    });
 	  },
-	
 	  getFile: function getFile() {
 	    console.log("Getting file");
-	
 	    var d = $.Deferred();
-	
 	    (0, _parseFile2.default)(Upload.file, {
-	      'chunk_size': 8192 * 1024,
+	      'chunk_size': 20 * (1024 * 1024),
 	      'chunk_read_callback': Upload.createChunks,
 	      'success': Upload.processChunks
 	    });
 	    return d.promise();
 	  },
-	
 	  createChunks: function createChunks(chunk, offset) {
-	    console.log('creating chunks');
 	    Upload.chunks.push(chunk);
 	  },
-	
 	  processChunks: function processChunks() {
-	    console.log('processChunks');
 	    var index = 0;
 	    var lastChunkIndex = Upload.chunks.length;
-	
 	    var setChunkID = function setChunkID(chunkID) {
 	      Upload.chunkID = chunkID;
 	      next();
 	    };
-	
 	    function next() {
 	      if (index > lastChunkIndex) {
 	        return false;
 	      }
-	
 	      if (index == 0) {
 	        Upload.loadChunk(Upload.chunks[index++], "start").then(setChunkID);
 	      } else if (index == lastChunkIndex) {
@@ -10246,22 +10237,20 @@
 	    }
 	    next();
 	  },
-	
 	  loadChunk: function loadChunk(chunk, type) {
-	    console.log('loadchunks');
 	    var d = $.Deferred();
 	
 	    var processCalls = {
 	      start: {
-	        url: "getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid'" + Upload.guid + "')?@folder='" + Upload.folderPath + "'&@file='" + Upload.file.name + "'",
+	        url: Upload.pageUrl + "/_api/web/getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid'" + Upload.guid + "')?@folder='" + Upload.folderPath + "'&@file='" + Upload.file.name + "'",
 	        response: "StartUpload"
 	      },
 	      continue: {
-	        url: "getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
+	        url: Upload.pageUrl + "/_api/web/getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
 	        response: "ContinueUpload"
 	      },
 	      finish: {
-	        url: "getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
+	        url: Upload.pageUrl + "/_api/web/getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
 	        response: "FinishUpload"
 	      }
 	    };
@@ -10270,6 +10259,7 @@
 	    console.log(call.url);
 	
 	    var post = Upload.post(call.url, chunk);
+	
 	    post.then(function (response) {
 	      if (type == "finish") {
 	        console.log('Finished');
@@ -10281,7 +10271,6 @@
 	  }
 	};
 	
-	// DOM Ready
 	$(function () {
 	  return Upload.init();
 	});
@@ -10309,13 +10298,13 @@
 	  var chunkErrorCallback = typeof opts['error_callback'] === 'function' ? opts['error_callback'] : function () {};
 	  var success = typeof opts['success'] === 'function' ? opts['success'] : function () {};
 	
-	  var onLoadHandler = function onLoadHandler(evt) {
-	    console.log('testing');
-	    if (evt.target.error == null) {
-	      offset += evt.target.result.length;
-	      chunkReadCallback(evt.target.result, offset);
+	  var onLoadHandler = function onLoadHandler(e) {
+	    var data = new Uint8Array(e.target.result);
+	    if (e.target.error == null) {
+	      offset += chunkSize;
+	      chunkReadCallback(data, offset);
 	    } else {
-	      chunkErrorCallback(evt.target.error);
+	      chunkErrorCallback(e.target.error);
 	      return;
 	    }
 	
@@ -10330,8 +10319,7 @@
 	    var r = new FileReader();
 	    var blob = _file.slice(_offset, _chunkSize + _offset);
 	    r.onload = onLoadHandler;
-	
-	    binary ? r.readAsArrayBuffer(blob) : r.readAsText(blob);
+	    r.readAsArrayBuffer(blob);
 	  };
 	  readBlock(offset, chunkSize, file);
 	}

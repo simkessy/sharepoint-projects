@@ -20,59 +20,47 @@ Upload = {
     return $.ajax({
       url: url,
       type: 'POST',
-      body: data,
+      data: data,
       processData: false,
+      async: false,
       headers: {
         "accept": "application/json;odata=verbose",
         "X-RequestDigest": Upload.digest,
-        "content-type": "application/x-www-urlencoded; charset=UTF-8
+        "content-type": "application/x-www-urlencoded; charset=UTF-8"
       }
     })
   },
-
   init: function() {
     this.fileInput.change(() => {
       this.file = $(this)["0"].fileInput["0"].files["0"]
       this.filePath = this.folderPath + this.file.name
     });
-
-
     this.button.click(function() {
       Upload.getFile().then(response => console.log(response))
     });
   },
-
   getFile: function() {
     console.log("Getting file")
-
     let d = $.Deferred();
-
     parseFile(Upload.file,{
-      'chunk_size': 8192 * 1024,
+      'chunk_size': 20 * (1024 * 1024),
       'chunk_read_callback': Upload.createChunks,
       'success': Upload.processChunks
     })
     return d.promise();
   },
-
   createChunks: function(chunk, offset) {
-    console.log('creating chunks');
     Upload.chunks.push(chunk);
   },
-
   processChunks: function() {
-    console.log('processChunks')
     let index = 0;
     let lastChunkIndex = Upload.chunks.length;
-
     let setChunkID = chunkID => {
       Upload.chunkID = chunkID;
       next();
     };
-
     function next() {
       if(index > lastChunkIndex) { return false }
-
       if (index == 0) {
         Upload.loadChunk(Upload.chunks[index++], "start").then(setChunkID)
       } else if (index == lastChunkIndex) {
@@ -83,22 +71,20 @@ Upload = {
     }
     next();
   },
-
   loadChunk: function(chunk, type) {
-    console.log('loadchunks')
     let d = $.Deferred();
 
     const processCalls = {
       start: {
-        url: "getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid'" + Upload.guid + "')?@folder='" + Upload.folderPath + "'&@file='" + Upload.file.name + "'",
+        url: Upload.pageUrl + "/_api/web/getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid'" + Upload.guid + "')?@folder='" + Upload.folderPath + "'&@file='" + Upload.file.name + "'",
         response: "StartUpload"
       },
       continue: {
-        url: "getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
+        url: Upload.pageUrl + "/_api/web/getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
         response: "ContinueUpload"
       },
       finish: {
-        url: "getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
+        url: Upload.pageUrl + "/_api/web/getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
         response: "FinishUpload"
       }
     }
@@ -107,6 +93,7 @@ Upload = {
     console.log(call.url)
 
     let post = Upload.post(call.url, chunk)
+
     post.then( response => {
       if (type == "finish") {
         console.log('Finished');
@@ -118,5 +105,4 @@ Upload = {
   }
 }
 
-// DOM Ready
-$(() => Upload.init());
+$(()=> Upload.init())
