@@ -11,25 +11,20 @@ export default function parseFile(file, options) {
   var success = typeof opts['success'] === 'function' ? opts['success'] : function() {};
 
   var onLoadHandler = function(evt) {
-    if (evt.target.result == "") {
-      console.log('Chunk empty, call finish');
-      success(file);
-      return;
-    }
-
+    console.log('testing')
     if (evt.target.error == null) {
-      chunkReadCallback(evt.target.result, offset).then(function() {
-        offset += evt.target.result.length;
-        readBlock(offset, chunkSize, file);
-      });
+      offset += evt.target.result.length;
+      chunkReadCallback(evt.target.result, offset)
     } else {
       chunkErrorCallback(evt.target.error);
       return;
     }
+
     if (offset >= fileSize) {
       success(file);
       return;
     }
+    readBlock(offset, chunkSize, file);
   }
 
   readBlock = function(_offset, _chunkSize, _file) {
@@ -37,16 +32,7 @@ export default function parseFile(file, options) {
     var blob = _file.slice(_offset, _chunkSize + _offset);
     r.onload = onLoadHandler;
 
-    var z = 1024 * 1024;
-    console.log("blob size:", blob.size/z, "offset:", _offset/z, "C+O:", (_chunkSize + _offset)/z, "fileSize:", file.size/z)
-
-    var x = _chunkSize + _offset;
-    if (x >= file.size) {
-      console.log('OFFSET MATCHES SIZE')
-    }
-
     binary ? r.readAsArrayBuffer(blob) : r.readAsText(blob)
-
   }
   readBlock(offset, chunkSize, file);
 }

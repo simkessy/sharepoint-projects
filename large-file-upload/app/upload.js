@@ -12,6 +12,7 @@ Upload = {
 
   firstChunk: true,
   chunk: null,
+  chunks: [],
   chunkID: null,
   fileOffset: null,
 
@@ -19,10 +20,12 @@ Upload = {
     return $.ajax({
       url: url,
       type: 'POST',
-      data: data,
+      body: data,
+      processData: false,
       headers: {
         "accept": "application/json;odata=verbose",
         "X-RequestDigest": Upload.digest,
+        "content-type": "application/x-www-urlencoded; charset=UTF-8
       }
     })
   },
@@ -46,85 +49,73 @@ Upload = {
 
     parseFile(Upload.file,{
       'chunk_size': 8192 * 1024,
-      'chunk_read_callback': Upload.processFile,
-      'success': Upload.finish
+      'chunk_read_callback': Upload.createChunks,
+      'success': Upload.processChunks
     })
     return d.promise();
   },
 
-  processFile: function(chunk, offset) {
-    let d = $.Deferred();
+  createChunks: function(chunk, offset) {
+    console.log('creating chunks');
+    Upload.chunks.push(chunk);
+  },
 
-    Upload.chunk = chunk;
-    Upload.fileOffset = offset;
+  processChunks: function() {
+    console.log('processChunks')
+    let index = 0;
+    let lastChunkIndex = Upload.chunks.length;
 
-    if(Upload.firstChunk) {
-      Upload.start(chunk).then(function(response) {
-        Upload.chunkID = response.d.StartUpload;
-        Upload.firstChunk = false;
-        d.resolve();
-      });
-    }else{
-      Upload.continue(chunk).then(function(response){
-        Upload.chunkID = response.d.ContinueUpload;
-        d.resolve();
-      });
+    let setChunkID = chunkID => {
+      Upload.chunkID = chunkID;
+      next();
+    };
+
+    function next() {
+      if(index > lastChunkIndex) { return false }
+
+      if (index == 0) {
+        Upload.loadChunk(Upload.chunks[index++], "start").then(setChunkID)
+      } else if (index == lastChunkIndex) {
+        Upload.loadChunk(Upload.chunks[index++], "finish").then(setChunkID)
+      } else {
+        Upload.loadChunk(Upload.chunks[index++], "continue").then(setChunkID)
+      }
     }
-    return d.promise();
+    next();
   },
 
-  start: function(chunk) {
-    console.log('Starting upload')
-
+  loadChunk: function(chunk, type) {
+    console.log('loadchunks')
     let d = $.Deferred();
 
-    let url = String.format( Upload.pageUrl +
-    "/_api/web/getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid'{0}')?@folder='{1}'&@file='{2}'",
-     Upload.guid,
-     Upload.folderPath,
-     Upload.file.name)
+    const processCalls = {
+      start: {
+        url: "getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid'" + Upload.guid + "')?@folder='" + Upload.folderPath + "'&@file='" + Upload.file.name + "'",
+        response: "StartUpload"
+      },
+      continue: {
+        url: "getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
+        response: "ContinueUpload"
+      },
+      finish: {
+        url: "getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
+        response: "FinishUpload"
+      }
+    }
 
-    let start = Upload.post(url, Upload.chunk);
+    let call = processCalls[type];
+    console.log(call.url)
 
-    start.then((chunkID) => d.resolve(chunkID));
-    return d.promise();
-  },
-
-  continue: function(chunkID) {
-    let d = $.Deferred();
-
-    let url = String.format( Upload.pageUrl + "/_api/web/getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid'{0}',fileOffset='{1}')?@file='{2}'",
-      Upload.guid,
-      Upload.chunkID,
-      Upload.filePath)
-
-    let continuePromise = Upload.post(url, Upload.chunk);
-
-    continuePromise.then((response) => d.resolve(response));
-    return d.promise();
-  },
-
-  finish: function(file) {
-    let d = $.Deferred();
-
-    let url = String.format( Upload.pageUrl + "/_api/web/getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'{0}',fileOffset='{1}')?@file='{2}'",
-      Upload.guid,
-      Upload.file.size,
-      Upload.filePath)
-
-    let finish = Upload.post(url);
-
-    finish.then((response) => {
-      d.resolve(response);
-      Upload.firstChunk = true;
-    },function(){
-      console.log('fuck');
-      Upload.firstChunk = true;
-    });
-    console.log('finish');
+    let post = Upload.post(call.url, chunk)
+    post.then( response => {
+      if (type == "finish") {
+        console.log('Finished');
+        Upload.firstChunk = true;
+      }
+      d.resolve(response.d[call.response]);
+    })
     return d.promise();
   }
-
 }
 
 // DOM Ready

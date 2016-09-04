@@ -10172,6 +10172,7 @@
 	
 	  firstChunk: true,
 	  chunk: null,
+	  chunks: [],
 	  chunkID: null,
 	  fileOffset: null,
 	
@@ -10209,79 +10210,75 @@
 	
 	    (0, _parseFile2.default)(Upload.file, {
 	      'chunk_size': 8192 * 1024,
-	      'chunk_read_callback': Upload.processFile,
-	      'success': Upload.finish
+	      'chunk_read_callback': Upload.createChunks,
+	      'success': Upload.processChunks
 	    });
 	    return d.promise();
 	  },
 	
-	  processFile: function processFile(chunk, offset) {
-	    var d = $.Deferred();
+	  createChunks: function createChunks(chunk, offset) {
+	    console.log('creating chunks');
+	    Upload.chunks.push(chunk);
+	  },
 	
-	    Upload.chunk = chunk;
-	    Upload.fileOffset = offset;
+	  processChunks: function processChunks() {
+	    console.log('processChunks');
+	    var index = 0;
+	    var lastChunkIndex = Upload.chunks.length;
 	
-	    if (Upload.firstChunk) {
-	      Upload.start(chunk).then(function (response) {
-	        Upload.chunkID = response.d.StartUpload;
-	        Upload.firstChunk = false;
-	        d.resolve();
-	      });
-	    } else {
-	      Upload.continue(chunk).then(function (response) {
-	        Upload.chunkID = response.d.ContinueUpload;
-	        d.resolve();
-	      });
+	    var setChunkID = function setChunkID(chunkID) {
+	      Upload.chunkID = chunkID;
+	      next();
+	    };
+	
+	    function next() {
+	      if (index > lastChunkIndex) {
+	        return false;
+	      }
+	
+	      if (index == 0) {
+	        Upload.loadChunk(Upload.chunks[index++], "start").then(setChunkID);
+	      } else if (index == lastChunkIndex) {
+	        Upload.loadChunk(Upload.chunks[index++], "finish").then(setChunkID);
+	      } else {
+	        Upload.loadChunk(Upload.chunks[index++], "continue").then(setChunkID);
+	      }
 	    }
-	    return d.promise();
+	    next();
 	  },
 	
-	  start: function start(chunk) {
-	    console.log('Starting upload');
-	
+	  loadChunk: function loadChunk(chunk, type) {
+	    console.log('loadchunks');
 	    var d = $.Deferred();
 	
-	    var url = String.format(Upload.pageUrl + "/_api/web/getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid'{0}')?@folder='{1}'&@file='{2}'", Upload.guid, Upload.folderPath, Upload.file.name);
+	    var processCalls = {
+	      start: {
+	        url: "getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid'" + Upload.guid + "')?@folder='" + Upload.folderPath + "'&@file='" + Upload.file.name + "'",
+	        response: "StartUpload"
+	      },
+	      continue: {
+	        url: "getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
+	        response: "ContinueUpload"
+	      },
+	      finish: {
+	        url: "getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
+	        response: "FinishUpload"
+	      }
+	    };
 	
-	    var start = Upload.post(url, Upload.chunk);
+	    var call = processCalls[type];
+	    console.log(call.url);
 	
-	    start.then(function (chunkID) {
-	      return d.resolve(chunkID);
+	    var post = Upload.post(call.url, chunk);
+	    post.then(function (response) {
+	      if (type == "finish") {
+	        console.log('Finished');
+	        Upload.firstChunk = true;
+	      }
+	      d.resolve(response.d[call.response]);
 	    });
-	    return d.promise();
-	  },
-	
-	  continue: function _continue(chunkID) {
-	    var d = $.Deferred();
-	
-	    var url = String.format(Upload.pageUrl + "/_api/web/getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid'{0}',fileOffset='{1}')?@file='{2}'", Upload.guid, Upload.chunkID, Upload.filePath);
-	
-	    var continuePromise = Upload.post(url, Upload.chunk);
-	
-	    continuePromise.then(function (response) {
-	      return d.resolve(response);
-	    });
-	    return d.promise();
-	  },
-	
-	  finish: function finish(file) {
-	    var d = $.Deferred();
-	
-	    var url = String.format(Upload.pageUrl + "/_api/web/getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'{0}',fileOffset='{1}')?@file='{2}'", Upload.guid, Upload.file.size, Upload.filePath);
-	
-	    var finish = Upload.post(url);
-	
-	    finish.then(function (response) {
-	      d.resolve(response);
-	      Upload.firstChunk = true;
-	    }, function () {
-	      console.log('fuck');
-	      Upload.firstChunk = true;
-	    });
-	    console.log('finish');
 	    return d.promise();
 	  }
-	
 	};
 	
 	// DOM Ready
@@ -10313,39 +10310,26 @@
 	  var success = typeof opts['success'] === 'function' ? opts['success'] : function () {};
 	
 	  var onLoadHandler = function onLoadHandler(evt) {
-	    if (evt.target.result == "") {
-	      console.log('Chunk empty, call finish');
-	      success(file);
-	      return;
-	    }
-	
+	    console.log('testing');
 	    if (evt.target.error == null) {
-	      chunkReadCallback(evt.target.result, offset).then(function () {
-	        offset += evt.target.result.length;
-	        readBlock(offset, chunkSize, file);
-	      });
+	      offset += evt.target.result.length;
+	      chunkReadCallback(evt.target.result, offset);
 	    } else {
 	      chunkErrorCallback(evt.target.error);
 	      return;
 	    }
+	
 	    if (offset >= fileSize) {
 	      success(file);
 	      return;
 	    }
+	    readBlock(offset, chunkSize, file);
 	  };
 	
 	  readBlock = function readBlock(_offset, _chunkSize, _file) {
 	    var r = new FileReader();
 	    var blob = _file.slice(_offset, _chunkSize + _offset);
 	    r.onload = onLoadHandler;
-	
-	    var z = 1024 * 1024;
-	    console.log("blob size:", blob.size / z, "offset:", _offset / z, "C+O:", (_chunkSize + _offset) / z, "fileSize:", file.size / z);
-	
-	    var x = _chunkSize + _offset;
-	    if (x >= file.size) {
-	      console.log('OFFSET MATCHES SIZE');
-	    }
 	
 	    binary ? r.readAsArrayBuffer(blob) : r.readAsText(blob);
 	  };
