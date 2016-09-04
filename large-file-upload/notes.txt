@@ -1,0 +1,44 @@
+----START----
+POST https://kessy.sharepoint.com/apps/_api/web/getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid%27519a1114-45be-401f-af85-ae37bfcfe297%27)?@folder=%27%2Fapps%2FShared%20Documents%27&@file=%27The%20Nice%20Guys%202016%201080p%20BluRay%20x264%20DTS%2DJYK%2Ezip%27 HTTP/1.1
+Host: kessy.sharepoint.com
+Connection: keep-alive
+Content-Length: 8388608
+accept: application/json;odata=verbose
+Origin: https://kessy.sharepoint.com
+x-requestdigest: 0xF8F7F0F31B9DDC9E942C82B7B8A44ED46265885E61CA5CBEC945F1E1E3D652D72F59D54111DB8B3CDE4F39C0B03FA0FFB31E8B89B28FF4AFAE401D4DC97DB1B8,03 Sep 2016 00:56:46 -0000
+User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36
+Content-Type: application/json;odata=verbose
+Referer: https://kessy.sharepoint.com/apps/Shared%20Documents/Forms/AllItems.aspx
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.8
+Cookie: mSP_contemp=1; WSS_FullScreenMode=false; odbn=1;
+
+----CONTINUE----
+POST https://kessy.sharepoint.com/apps/_api/web/getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid%27519a1114-45be-401f-af85-ae37bfcfe297%27,fileOffset=%273095396352%27)?@file=%27%2Fapps%2FShared%20Documents%2FThe%20Nice%20Guys%202016%201080p%20BluRay%20x264%20DTS%2DJYK%2Ezip%27 HTTP/1.1
+Host: kessy.sharepoint.com
+Connection: keep-alive
+Content-Length: 8388608
+accept: application/json;odata=verbose
+Origin: https://kessy.sharepoint.com
+x-requestdigest: 0x8D1D6FA8AE28D8BBA034F8C535EC2343C901DFB78F8D23C4AC7E06B389A94B28FAA15BB3B5BFBB8BCFAA223CD504B86F962F6624342153B098936FE8CBDFC1A4,03 Sep 2016 01:26:37 -0000
+User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36
+Content-Type: application/json;odata=verbose
+Referer: https://kessy.sharepoint.com/apps/Shared%20Documents/Forms/AllItems.aspx
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.8
+Cookie: mSP_contemp=1; odbn=1; WSS_FullScreenMode=false;
+
+----FINISH----
+POST https://kessy.sharepoint.com/apps/_api/web/getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid%27519a1114-45be-401f-af85-ae37bfcfe297%27,fileOffset=%273103784960%27)?@file=%27%2Fapps%2FShared%20Documents%2FThe%20Nice%20Guys%202016%201080p%20BluRay%20x264%20DTS%2DJYK%2Ezip%27 HTTP/1.1
+Host: kessy.sharepoint.com
+Connection: keep-alive
+Content-Length: 3885754
+accept: application/json;odata=verbose
+Origin: https://kessy.sharepoint.com
+x-requestdigest: 0x8D1D6FA8AE28D8BBA034F8C535EC2343C901DFB78F8D23C4AC7E06B389A94B28FAA15BB3B5BFBB8BCFAA223CD504B86F962F6624342153B098936FE8CBDFC1A4,03 Sep 2016 01:26:37 -0000
+User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36
+Content-Type: application/json;odata=verbose
+Referer: https://kessy.sharepoint.com/apps/Shared%20Documents/Forms/AllItems.aspx
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.8
+Cookie: mSP_contemp=1; odbn=1; WSS_FullScreenMode=false;
