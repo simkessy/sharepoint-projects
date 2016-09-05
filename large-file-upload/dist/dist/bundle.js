@@ -10174,6 +10174,7 @@
 	  chunk: null,
 	  chunks: [],
 	  chunkID: null,
+	  chunkSize: 10, // in mb
 	  fileOffset: null,
 	
 	  post: function post(url, data) {
@@ -10182,7 +10183,6 @@
 	      type: 'POST',
 	      data: data,
 	      processData: false,
-	      async: false,
 	      headers: {
 	        "accept": "application/json;odata=verbose",
 	        "X-RequestDigest": Upload.digest,
@@ -10207,35 +10207,17 @@
 	    console.log("Getting file");
 	    var d = $.Deferred();
 	    (0, _parseFile2.default)(Upload.file, {
-	      'chunk_size': 20 * (1024 * 1024),
-	      'chunk_read_callback': Upload.createChunks,
-	      'success': Upload.processChunks
+	      'chunk_size': Upload.chunkSize,
+	      'chunk_read_callback': Upload.loadChunk,
+	      'success': Upload.finished
 	    });
 	    return d.promise();
 	  },
 	  createChunks: function createChunks(chunk, offset) {
 	    Upload.chunks.push(chunk);
 	  },
-	  processChunks: function processChunks() {
-	    var index = 0;
-	    var lastChunkIndex = Upload.chunks.length;
-	    var setChunkID = function setChunkID(chunkID) {
-	      Upload.chunkID = chunkID;
-	      next();
-	    };
-	    function next() {
-	      if (index > lastChunkIndex) {
-	        return false;
-	      }
-	      if (index == 0) {
-	        Upload.loadChunk(Upload.chunks[index++], "start").then(setChunkID);
-	      } else if (index == lastChunkIndex) {
-	        Upload.loadChunk(Upload.chunks[index++], "finish").then(setChunkID);
-	      } else {
-	        Upload.loadChunk(Upload.chunks[index++], "continue").then(setChunkID);
-	      }
-	    }
-	    next();
+	  finished: function finished() {
+	    console.log('Done');
 	  },
 	  loadChunk: function loadChunk(chunk, type) {
 	    var d = $.Deferred();
@@ -10265,7 +10247,8 @@
 	        console.log('Finished');
 	        Upload.firstChunk = true;
 	      }
-	      d.resolve(response.d[call.response]);
+	      Upload.chunkID = response.d[call.response];
+	      d.resolve();
 	    });
 	    return d.promise();
 	  }
@@ -10289,20 +10272,29 @@
 	function parseFile(file, options) {
 	  var opts = typeof options === 'undefined' ? {} : options;
 	  var fileSize = file.size;
-	  var chunkSize = typeof opts['chunk_size'] === 'undefined' ? 64 * 1024 : parseInt(opts['chunk_size']);
-	  var binary = typeof opts['binary'] === 'undefined' ? false : opts['binary'] == true;
+	  var chunkSize = typeof opts['chunk_size'] === 'undefined' ? 64 * 1024 : parseInt(opts['chunk_size'] * (1024 * 1024));
 	  var offset = 0;
-	  var self = this; // we need a reference to the current object
 	  var readBlock = null;
 	  var chunkReadCallback = typeof opts['chunk_read_callback'] === 'function' ? opts['chunk_read_callback'] : function () {};
 	  var chunkErrorCallback = typeof opts['error_callback'] === 'function' ? opts['error_callback'] : function () {};
 	  var success = typeof opts['success'] === 'function' ? opts['success'] : function () {};
 	
+	  var first = true;
+	  var type = null;
+	
 	  var onLoadHandler = function onLoadHandler(e) {
 	    var data = new Uint8Array(e.target.result);
 	    if (e.target.error == null) {
 	      offset += chunkSize;
-	      chunkReadCallback(data, offset);
+	      type = first == true ? "start" : offset >= fileSize ? "finish" : "continue";
+	
+	      chunkReadCallback(data, type).then(function () {
+	        first = false;
+	
+	        if (type !== 'finish') {
+	          readBlock(offset, chunkSize, file);
+	        }
+	      });
 	    } else {
 	      chunkErrorCallback(e.target.error);
 	      return;
@@ -10312,7 +10304,6 @@
 	      success(file);
 	      return;
 	    }
-	    readBlock(offset, chunkSize, file);
 	  };
 	
 	  readBlock = function readBlock(_offset, _chunkSize, _file) {

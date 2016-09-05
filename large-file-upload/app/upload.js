@@ -14,6 +14,7 @@ Upload = {
   chunk: null,
   chunks: [],
   chunkID: null,
+  chunkSize: 10, // in mb
   fileOffset: null,
 
   post: function(url, data) {
@@ -22,7 +23,6 @@ Upload = {
       type: 'POST',
       data: data,
       processData: false,
-      async: false,
       headers: {
         "accept": "application/json;odata=verbose",
         "X-RequestDigest": Upload.digest,
@@ -43,48 +43,32 @@ Upload = {
     console.log("Getting file")
     let d = $.Deferred();
     parseFile(Upload.file,{
-      'chunk_size': 20 * (1024 * 1024),
-      'chunk_read_callback': Upload.createChunks,
-      'success': Upload.processChunks
+      'chunk_size': Upload.chunkSize,
+      'chunk_read_callback': Upload.loadChunk,
+      'success': Upload.finished
     })
     return d.promise();
   },
   createChunks: function(chunk, offset) {
     Upload.chunks.push(chunk);
   },
-  processChunks: function() {
-    let index = 0;
-    let lastChunkIndex = Upload.chunks.length;
-    let setChunkID = chunkID => {
-      Upload.chunkID = chunkID;
-      next();
-    };
-    function next() {
-      if(index > lastChunkIndex) { return false }
-      if (index == 0) {
-        Upload.loadChunk(Upload.chunks[index++], "start").then(setChunkID)
-      } else if (index == lastChunkIndex) {
-        Upload.loadChunk(Upload.chunks[index++], "finish").then(setChunkID)
-      } else {
-        Upload.loadChunk(Upload.chunks[index++], "continue").then(setChunkID)
-      }
-    }
-    next();
+ finished: function() {
+    console.log('Done')
   },
   loadChunk: function(chunk, type) {
     let d = $.Deferred();
 
     const processCalls = {
       start: {
-        url: Upload.pageUrl + "/_api/web/getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid'" + Upload.guid + "')?@folder='" + Upload.folderPath + "'&@file='" + Upload.file.name + "'",
+        url: `${Upload.pageUrl}/_api/web/getFolderByServerRelativeUrl(@folder)/files/addStub(@file)/StartUpload(guid'${Upload.guid}')?@folder='${Upload.folderPath}'&@file='${Upload.file.name}'`,
         response: "StartUpload"
       },
       continue: {
-        url: Upload.pageUrl + "/_api/web/getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
+        url: `${Upload.pageUrl}/_api/web/getFileByServerRelativeUrl(@file)/ContinueUpload(uploadId=guid'${Upload.guid}',fileOffset='${Upload.chunkID}')?@file='${Upload.filePath}'`,
         response: "ContinueUpload"
       },
       finish: {
-        url: Upload.pageUrl + "/_api/web/getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'" + Upload.guid + "',fileOffset='" + Upload.chunkID + "')?@file='" + Upload.filePath + "'",
+        url: `${Upload.pageUrl}/_api/web/getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'${Upload.guid}',fileOffset='${Upload.chunkID}')?@file='${Upload.filePath}'`,
         response: "FinishUpload"
       }
     }
@@ -99,10 +83,11 @@ Upload = {
         console.log('Finished');
         Upload.firstChunk = true;
       }
-      d.resolve(response.d[call.response]);
+      Upload.chunkID = response.d[call.response]
+      d.resolve();
     })
     return d.promise();
-  }
+  },
 }
 
 $(()=> Upload.init())
