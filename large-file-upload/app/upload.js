@@ -1,21 +1,19 @@
 window.Upload = window.Upload || {};
 
 Upload = {
-    guid: SP.Guid.newGuid().toString(),
-    digest: (() => $("#__REQUESTDIGEST").val()),
-    fileInput: $("#file"),
+    guid: SP.Guid.newGuid().toString(), // Unique GUID for upload process
+    digest: (() => $("#__REQUESTDIGEST").val()), // Page Digest need to secure request
+    fileInput: null, // DOM file input element
+    folderPath: null, // Folder path where to save file
+    button: null, // Upload button to attach events
     pageUrl: _spPageContextInfo.webServerRelativeUrl,
-    button: $('#upload'),
-    folderPath: "/apps/Shared Documents/",
 
-    firstChunk: true,
-    chunk: null,
-    chunks: [],
-    chunkID: null,
-    chunkSizeInMB: 8, // in mb
-    fileOffset: null,
+    firstChunk: true, // Flag for first upload chunk
+    chunkID: null, // ID of last chunk processed. Used to initiate next chunk start point
+    chunkSizeInMB: 8, // Defaul chunk sizes in MB
 
-    post: function(url, data) {
+    // Handle all ajax posts
+    post: (url, data) => {
         return $.ajax({
             url: url,
             type: 'POST',
@@ -29,69 +27,98 @@ Upload = {
         })
     },
 
-    init: function() {
+    // Set inputs and input event handlers
+    init: function(fileInput, folderPath, buttonElement) {
+        this.fileInput = $(`#${fileInput}`);
+        this.folderPath = folderPath;
+        this.button = $(`#${buttonElement}`);
+
         this.fileInput.change(() => {
             this.file = $(this)["0"].fileInput["0"].files["0"]
             this.filePath = this.folderPath + this.file.name
         });
-        this.button.click(function() {
-            Upload.getFile().then(response => console.log(response))
-        });
 
-        // Attempt form digest update every 5 minutes
-        setInterval(function() {
+        this.button.click(Upload.getFile);
+    },
+
+    // Page Digest expires every 30 minutes.
+    // Check every 5 minutes to determine if new digest can be obtained
+    // Update the digest to prevent FORBIDDEN error during long uploads
+    startDigestCheck: function() {
+        Upload.digestCheck = setInterval(initUpdateFormDigest, 5*60000)
+
+        let initUpdateFormDigest =  () => {
             console.log('Update form digest')
             UpdateFormDigest(Upload.pageUrl, _spFormDigestRefreshInterval);
-        }, 5 * 60000);
+        }
     },
+
+    // Retrieve file object from input
     getFile: function() {
         console.log("Getting file")
         let d = $.Deferred();
-        this.parseFile()
+
+        Upload.startDigestCheck();
+
+        Upload.parseFile()
+            .then(() => {
+                Upload.finished();
+                d.resolve();
+            }, (error) => {
+                alert(`Upload Error: ${error}`);
+                console.log(error);
+                d.reject();
+            })
+            .always(clearInterval(Upload.digestCheck))
         return d.promise();
     },
 
+    // Turn file into chunks/slices and upload each chunk to library
     parseFile: function() {
-      let file = Upload.file
-      let fileSize = file.size;
-      let chunkSize = this.chunkSizeInMB * (1024 * 1024);
-      let offset = 0;
-      let firstChunk = true;
-      let uploadType = null;
+        let d = $.Deferred();
 
-      let sendBlob = blob => {
-        if (blob.size != 0) {
-          offset += chunkSize;
-          uploadType = firstChunk ? "start" : (offset >= fileSize) ? "finish" : "continue";
+        let file = Upload.file
+        let fileSize = file.size;
+        let defaultChunkSize = this.chunkSizeInMB * (1024 * 1024);
+        let chunkSize = (defaultChunkSize > fileSize) ? (fileSize / 2) : defaultChunkSize;
+        let offset = 0;
+        let firstChunk = true;
+        let uploadType = null;
 
-          Upload.loadChunk(blob, uploadType).then(() => {
-            firstChunk = false;
-            if (uploadType !== 'finish') readBlob(offset)
-          })
-        } else {
-          console.log('Error in blob reading');
-          return;
+        let sendBlob = blob => {
+            if (blob.size !== 0) {
+                offset += chunkSize;
+                uploadType = firstChunk ? "start" : (offset >= fileSize) ? "finish" : "continue";
+
+                Upload.loadChunk(blob, uploadType)
+                    .then(() => {
+                        firstChunk = false;
+                        if (uploadType !== 'finish') readBlob(offset);
+                    }, (error) => {
+                        d.reject(error)
+                    })
+            } else {
+                console.log('Error in blob reading');
+                d.reject('Error in reading blob');
+                return;
+            }
+
+            if (offset >= fileSize) {
+                d.resolve('Completed file upload');
+                return;
+            }
         }
-
-        if (offset >= fileSize) {
-          Upload.finished();
-          return;
+        let readBlob = _offset => {
+            let blob = file.slice(_offset, chunkSize + _offset);
+            sendBlob(blob);
         }
-      }
-      let readBlob = _offset => {
-        let blob = file.slice(_offset, chunkSize + _offset)
-        sendBlob(blob)
-      }
-      readBlob(offset)
+        readBlob(offset);
+        return d.promise();
     },
 
-    createChunks: function(chunk, offset) {
-        Upload.chunks.push(chunk);
-    },
-    finished: function() {
-        console.log('Done')
-    },
-    loadChunk: function(chunk, type) {
+    // Load each file chunk into library
+    // Type: start, continue or finished <--- set by parse file automatically
+    loadChunk: (chunk, type) => {
         let d = $.Deferred();
 
         const processCalls = {
@@ -110,15 +137,25 @@ Upload = {
         }
 
         let call = processCalls[type];
-
         let post = Upload.post(call.url, chunk)
 
         post.then(response => {
             Upload.chunkID = response.d[call.response]
             d.resolve();
+        }, (error) => {
+            let errorMessage = JSON.parse(error.responseText).error.message.value
+            d.reject(JSON.stringify(errorMessage))
         })
         return d.promise();
     },
+
+    // Use this to handle progress or animations at some point
+    finished: function() {
+        console.log('Done')
+    },
 }
 
-$(() => Upload.init())
+// When document is ready and SharePoint dependencies loaded launch init
+$(() => SP.SOD.executeFunc('sp.js', 'SP.ClientContext',
+    () => Upload.init('file', '/apps/Shared Documents/', 'upload'))
+)
