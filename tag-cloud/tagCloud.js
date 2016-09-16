@@ -28,7 +28,6 @@ var get = function() {
 }
 
 var processTags = function(data) {
-	// do something with the data
 	var tags = _.chain(data)
 		.map(function(x) {return  x.Tags})
 		.flattenDeep()
