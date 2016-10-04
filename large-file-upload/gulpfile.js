@@ -10,22 +10,22 @@ gulp.task('pack', function() {
   return gulp.src(['/app/loader.js'])
   .pipe(webpack( require('./webpack.config.js') ))
   .pipe(gulp.dest(target))
-  .pipe($.spsave({
-    siteUrl: settings.siteUrl,
-    username: settings.username,
-    password: settings.password,
-    folder: "SiteAssets/large-file-upload"
-  }))
+  // .pipe($.spsave({
+  //   siteUrl: settings.siteUrl,
+  //   username: settings.username,
+  //   password: settings.password,
+  //   folder: "SiteAssets/large-file-upload"
+  // }))
 })
 
 gulp.task('push', ['pack'], function() {
   return gulp.src(['./app/index.html'])
-  .pipe($.spsave({
-    siteUrl: settings.siteUrl,
-    username: settings.username,
-    password: settings.password,
-    folder: "SiteAssets/large-file-upload"
-  }))
+  // .pipe($.spsave({
+  //   siteUrl: settings.siteUrl,
+  //   username: settings.username,
+  //   password: settings.password,
+  //   folder: "SiteAssets/large-file-upload"
+  // }))
   .pipe($.notify({
       onLast: true,
       title: 'SharePoint Push',

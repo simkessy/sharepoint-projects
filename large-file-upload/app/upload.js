@@ -55,7 +55,7 @@ Upload = {
 
     // Retrieve file object from input
     getFile: function() {
-        if (this.fileInput.files.length === 0) {
+        if (Upload.fileInput[0].files.length === 0) {
             alert('No file selected');
             return;
         }
@@ -155,31 +155,34 @@ Upload = {
 
     // Use this to handle progress or animations at some point
     finished: function() {
-        Upload.updateFileLookup(Upload.chunkID)
+        Upload.updateFileLookup()
     },
     error: function(error) {
-        document.getElementById('showMsg').innerHTML = `Upload Error: ${error}`l
+        document.getElementById('showMsg').style.display = 'block';
+        document.getElementById('showMsg').innerHTML = `Upload Error: ${error}`;
         console.log(error);
     },
-    updateFileLookup: function(filePropertiesUrl) {
+    updateFileLookup: function() {
+        let filePropertiesUrl = `${_spPageContextInfo.webServerRelativeUrl}/_api/Web/GetFileByServerRelativeUrl('${_spPageContextInfo.webServerRelativeUrl}/Documents/${Upload.fileInput[0].files[0].name}')/ListItemAllFields`;
+
         $.get(filePropertiesUrl)
             .then(function(responseXML) {
-                let parsedXML = $.parseXML(responseXML)
-                let $xml = $(parsedXML);
+                let $xml = $(responseXML);
                 let fileID = $xml.SPFilterNode("d:Id").text();
 
                 let isLessonsLearned = location.pathname.indexOf("Lessons%20Learned") > -1;
                 let lookUpField = isLessonsLearned ? "Lesson" : "Common";
                 let queryParam = location.search.substring(location.search.indexOf("=") + 1);
+
                 $().SPServices({
                    operation: "UpdateListItems",
                    listName: "Documents",
                    ID: fileID,
                    valuepairs: [[lookUpField, queryParam]],
                    completefunc: function (xData, Status) {
-                        alert('Finished uploading file')
                         document.getElementById('showMsg').style.display = 'block';
-                        document.getElementById('showMsg').innerHTML = 'Document Successfully Added!'
+                        document.getElementById('showMsg').innerHTML = 'Document Successfully Added!';
+                        location.reload();
                    }
                 });
             })
@@ -190,7 +193,7 @@ Upload = {
 $(() => SP.SOD.executeFunc('sp.js', 'SP.ClientContext',
     () => {
         let input = 'docUpload';
-        let destination = `${_spPageContextInfo.webServerRelativeUrl}/Documents`;
+        let destination = `${_spPageContextInfo.webServerRelativeUrl}/Documents/`;
         let button = 'btnSave';
         Upload.init(input, destination, button)
     })

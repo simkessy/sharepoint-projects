@@ -4,7 +4,7 @@ var path = require('path');
 module.exports = {
   entry: './app/loader.js',
   output: {
-    filename: './dist/bundle.js'
+    filename: './bundle.js'
   },
   devtool: 'source-map',
   module: {
