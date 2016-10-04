@@ -55,11 +55,6 @@ Upload = {
 
     // Retrieve file object from input
     getFile: function() {
-        if (this.fileInput.files.length === 0) {
-            alert('No file selected');
-            return;
-        }
-
         console.log("Getting file")
         let d = $.Deferred();
 
@@ -69,8 +64,9 @@ Upload = {
             .then(() => {
                 Upload.finished();
                 d.resolve();
-            }, (err) => {
-                Upload.error(err);
+            }, (error) => {
+                alert(`Upload Error: ${error}`);
+                console.log(error);
                 d.reject();
             })
             .always(clearInterval(Upload.digestCheck))
@@ -136,7 +132,7 @@ Upload = {
             },
             finish: {
                 url: `${Upload.pageUrl}/_api/web/getFileByServerRelativeUrl(@file)/FinishUpload(uploadId=guid'${Upload.guid}',fileOffset='${Upload.chunkID}')?@file='${Upload.filePath}'`,
-                response: "ListItemAllFields.__deferred.uri"
+                response: "FinishUpload"
             }
         }
 
@@ -155,44 +151,11 @@ Upload = {
 
     // Use this to handle progress or animations at some point
     finished: function() {
-        Upload.updateFileLookup(Upload.chunkID)
+        console.log('Done')
     },
-    error: function(error) {
-        document.getElementById('showMsg').innerHTML = `Upload Error: ${error}`l
-        console.log(error);
-    },
-    updateFileLookup: function(filePropertiesUrl) {
-        $.get(filePropertiesUrl)
-            .then(function(responseXML) {
-                let parsedXML = $.parseXML(responseXML)
-                let $xml = $(parsedXML);
-                let fileID = $xml.SPFilterNode("d:Id").text();
-
-                let isLessonsLearned = location.pathname.indexOf("Lessons%20Learned") > -1;
-                let lookUpField = isLessonsLearned ? "Lesson" : "Common";
-                let queryParam = location.search.substring(location.search.indexOf("=") + 1);
-                $().SPServices({
-                   operation: "UpdateListItems",
-                   listName: "Documents",
-                   ID: fileID,
-                   valuepairs: [[lookUpField, queryParam]],
-                   completefunc: function (xData, Status) {
-                        alert('Finished uploading file')
-                        document.getElementById('showMsg').style.display = 'block';
-                        document.getElementById('showMsg').innerHTML = 'Document Successfully Added!'
-                   }
-                });
-            })
-    }
 }
 
 // When document is ready and SharePoint dependencies loaded launch init
 $(() => SP.SOD.executeFunc('sp.js', 'SP.ClientContext',
-    () => {
-        let input = 'docUpload';
-        let destination = `${_spPageContextInfo.webServerRelativeUrl}/Documents`;
-        let button = 'btnSave';
-        Upload.init(input, destination, button)
-    })
+    () => Upload.init('file', '/apps/Shared Documents/', 'upload'))
 )
-
