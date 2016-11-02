@@ -1,0 +1,189 @@
+<head>
+	<script src="/sites/HRCS/IS/MyGCHR/SiteAssets/app2/dataService.js"></script>
+	<script src="/sites/HRCS/IS/MyGCHR/SiteAssets/app2/wg.js"></script>
+	<style type="text/css">
+		.ms-rtestate-read P {
+			margin: 0px;
+		}
+		.list-group {
+			height: 300px;
+			overflow-y: auto;
+		}
+		.list-group-item .glyphicon {
+			margin-right: 10px;
+		}
+		.media {
+			overflow: visible;
+			margin-top: 0px;
+		}
+		.page-header {
+			margin-top: 0px;
+		}
+	</style>
+<html xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_dlc_DocId msdt:dt="string">FZ534WANMHJZ-38-149</mso:_dlc_DocId>
+<mso:_dlc_DocIdItemGuid msdt:dt="string">d48cc6df-e714-456b-a8d7-89411caaada4</mso:_dlc_DocIdItemGuid>
+<mso:_dlc_DocIdUrl msdt:dt="string">http://collaboration-hr-civ.forces.mil.ca/sites/HRCS/IS/MyGCHR/_layouts/DocIdRedir.aspx?ID=FZ534WANMHJZ-38-149, FZ534WANMHJZ-38-149</mso:_dlc_DocIdUrl>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+
+<body>
+	<div class="container-fluid">
+		<!-- HEADER -->
+		<div class="page-header container-wg-details hidden">
+			<h1><span class="wg-title"></span> <small class="wg-status text-right"></small></h1>
+			<div class="lead">
+				<strong>Primary Business: </strong><span class="wg-business"></span>
+				<strong>Frequency:</strong> <span class="wg-frequency"></span>
+			</div>
+		</div>
+
+		<!-- MAIN CONTENT -->
+		<div class="main-content">
+			<!-- LEFT SIDE -->
+			<div class="col-xs-3">
+				<!-- DETAILS -->
+				<div class="row well container-wg-details hidden">
+					<div class="panel panel-primary">
+						<div class="panel-heading clearfix">
+							<h3 class="panel-title pull-left">Details</h3>
+							<button type='button' class="btn btn-xs btn-warning pull-right edit-wg"><i class="glyphicon glyphicon-pencil"></i></button>
+						</div>
+						<div >
+							<table class="table table-striped table-hover table-condensed">
+								<tbody>
+									<tr>
+										<td>Meeting Type</td>
+										<td class="wg-Meeting_x0020_Type"></td>
+									</tr>
+									<tr>
+										<td>Level</td>
+										<td class="wg-Level"></td>
+									</tr>
+									<tr>
+										<td>Link To Meeting</td>
+										<td>
+											<a class="wg-Link" href="{{wg.Link_x0020_To_x0020_Meeting_x002.Url}}" target="_blank">Click here
+											</a>
+										</td>
+									</tr>
+									<tr>
+										<td>Role</td>
+										<td class="wg-Role"></td>
+									</tr>
+									<tr>
+										<td>Scope</td>
+										<td class="wg-Scope"></td>
+									</tr>
+									<tr>
+										<td>Editor</td>
+										<td class="wg-userName"></td>
+									</tr>
+									<tr>
+										<td>Confirmed</td>
+										<td class="wg-Confirmed" style="text-transform: capitalize"></td>
+									</tr>
+									<tr>
+										<td>Associated Project </td>
+										<td class="wg-Associated_x0020_Project_x0020__"></td>
+									</tr>
+									<tr>
+										<td>Expected Attendees</td>
+										<td class="wg-Expected_x0020_Attendee_x0020_Le"></td>
+									</tr>
+									<tr>
+										<td>Author</td>
+										<td class="wg-Author"></td>
+									</tr>
+									<tr>
+										<td>Created</td>
+										<td class="wg-Created"></td>
+									</tr>
+									<tr>
+										<td>Modified</td>
+										<td class="wg-Modified"></td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- RIGHT SIDE -->
+			<div class="col-xs-8">
+				<div class="row">
+					<!-- ATTENDEES -->
+					<div class="col-xs-5 container-wg-attendees hidden">
+						<div class="panel panel-info">
+							<div class="panel-heading clearfix">
+								<h3 class="panel-title pull-left">Participants</h3>
+								<button type="button" title="Remove attendence" class="btn btn-xs btn-danger pull-right remove-user hidden"><span class="glyphicon glyphicon-minus"></span></button>
+								<button type="button" title="Will or have attended" class="btn btn-xs btn-success pull-right add-user hidden"><span class="glyphicon glyphicon-plus"></span></button>
+							</div>
+							<div >
+								<div class="list-group wg-attendees"></div>
+							</div>
+						</div>
+					</div>
+					<!-- DOCUMENTS -->
+					<div class="col-xs-5 container-wg-files hidden">
+						<div class="panel panel-info">
+							<div class="panel-heading clearfix">
+								<h3 class="panel-title pull-left">Documents</h3>
+								<button type="button" class="btn btn-xs btn-success pull-right new-file"><span class="glyphicon glyphicon-plus"></span></button>
+								<button type="button" class="btn btn-xs btn-info pull-right see-files"><span class="glyphicon glyphicon-open"></span></button>
+							</div>
+							<div >
+								<div class="list-group wg-files"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<!-- FEEDBACK -->
+					<div class="col-xs-5 container-wg-feedback hidden">
+						<div class="panel panel-info">
+							<div class="panel-heading clearfix">
+								<h3 class="panel-title pull-left">Feedback</h3>
+								<button type="button" class="btn btn-xs btn-success pull-right new-feedback"><span class="glyphicon glyphicon-plus"></span></button>
+							</div>
+							<div >
+								<div class="list-group wg-feedback"></div>
+							</div>
+						</div>
+					</div>
+					<!-- EVENTS -->
+					<div class="col-xs-5 container-wg-events hidden">
+						<div class="panel panel-info">
+							<div class="panel-heading clearfix">
+								<h3 class="panel-title pull-left">Related Events</h3>
+								<button type="button" class="btn btn-xs btn-success pull-right new-event"><span class="glyphicon glyphicon-plus"></span></button>
+							</div>
+							<div >
+								<div class="list-group wg-events"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-10 container-wg-discussions hidden">
+						<div class="panel panel-warning">
+							<div class="panel-heading clearfix">
+								<h3 class="panel-title pull-left">Discussions</h3>
+								<button type="button" class="btn btn-xs btn-success pull-right new-discussion"><span class="glyphicon glyphicon-plus"></span></button>
+							</div>
+							<div >
+								<div class="list-group wg-discussions"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>	
+	</div>
+</body>
