@@ -20,7 +20,7 @@ var get = function() {
 	}
 
 	function bad() {
-		alert('fucked up')
+		alert('error, didn\'t work')
 		d.reject('nope')
 	}
 
