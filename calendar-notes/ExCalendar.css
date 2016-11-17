@@ -1,0 +1,59 @@
+#s4-leftpanel {
+  display: none
+}
+.s4-ca {
+  margin-left: 0px
+}
+.hideSWSAnnouncement {
+  display: none
+}
+
+.container {
+  margin-top: 20px;
+  text-align: center;
+  max-height: 600px;
+  overflow-y: auto; 
+  font-family: Helvetica,Arial,sans-serif;
+}
+
+.card {
+  border: 2px solid #00acc1;
+  margin-bottom: 15px;
+  background: white;
+  border-radius: 2px;
+  display: inline-block;
+  height: 150px;
+  margin: 1rem;
+  position: relative;
+  width: 400px;
+  opacity:inherit;
+  filter:inherit;
+  font-
+}
+
+.card:hover {
+  height: 200px;
+  width: 500px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.card p {
+  padding: 0px 5px;
+  text-align: left;
+}
+
+.card h3 {
+  background: #26c6da;
+  border-bottom: 3px solid #00acc1;
+  padding: 10px 0px;
+  margin: 0px;
+  margin-bottom: 5px;
+}
+
+.shadow {
+  /* For IE 8 */
+  -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+  /* For IE 5.5 - 7 */
+  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
+}
