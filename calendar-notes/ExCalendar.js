@@ -3,7 +3,6 @@ var fail = function() {
 }
 
 var get = function(date) {
-  var d = $.Deferred();
   var dateFormat = "YYYY-MM-DD HH:mm:ss"
   var query = '<Query><Where><And><Geq><FieldRef Name="Status_x0020_Date" /><Value IncludeTimeValue="TRUE" Type="DateTime">' + date.format(dateFormat) + '</Value></Geq><Leq><FieldRef Name="Status_x0020_Date" /><Value IncludeTimeValue="TRUE" Type="DateTime">' + date.endOf('day').format(dateFormat) + '</Value></Leq></And></Where></Query>'; 
 
@@ -19,7 +18,7 @@ var get = function(date) {
 
     function renderCard(x) {
       var html = ''
-      html += "<div class='card shadow'><h3>" + x.Position_x0020_Title + "</h3>"
+      html += "<div class='card shadow' data-id='" + x.ID + "' data-title='" + x.Position_x0020_Title + "'><h3>" + x.Position_x0020_Title + "</h3>"
       html += "<p><strong>Position Class: </strong>" + x.Position_x0020_Classification +"</p>"
       html += "<p><strong>Client: </strong>" + x.Client +"</p>"
       html += "<p><strong>Status: </strong>" + x.Status +"</p>"
@@ -37,11 +36,12 @@ var get = function(date) {
       container.append(renderCard(item)).hide().fadeIn("fastest");
     })
 
-    d.resolve();
+    // Set Dialog click event handler
+    $(".card").click(dialog)
+
   }
 
   get.then(pass, fail)
-  return d.promise();
 }
 
 
@@ -140,6 +140,19 @@ var prepareCalendar = function() {
     }, 500)
 }
 
+
+var dialog = function() { 
+  // Get ID from item
+  var id = $(this).data('id')
+  // Generate dialog url using id
+  var url = _spPageContextInfo.webServerRelativeUrl + "/Lists/Calendar/DispForm2.aspx?ID=" + id;
+
+  // Lunch dialog
+  SP.UI.ModalDialog.showModalDialog({ 
+    url: url, 
+    title: $(this).data('title') 
+  }); 
+} 
 
 $("#AsynchronousViewDefault_CalendarView")
   .on("click", "a[title$='Month']", function() {setTimeout(prepareCalendar, 500)})
