@@ -1,0 +1,34 @@
+<!-- <script type="text/javascript" src="/sites/hrco/DGWD/DCEP/Site%20Assets/bundle/jquery.min.js"></script>
+<script type="text/javascript" src="/sites/hrco/DGWD/DCEP/Site%20Assets/bundle/jquery.SPServices.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/sites/hrco/DGWD/DCEP/Site%20Assets/AskDECEP.css">
+<script type="text/javascript">
+$(function(){
+	var adminItems = $(".admin-item");
+	(function checkUserGroup() {
+		$().SPServices({
+			operation: "GetGroupCollectionFromUser",
+			userLoginName: $().SPServices.SPGetCurrentUser(),
+			completefunc: function (xData, Status) {
+				if( Status == "success") {
+
+					// If user in admin group they can see admin items 
+					if (!($(xData.responseXML).find("Group[Name='AskDCEP Admins']").length == 1)){
+						adminItems.hide()
+					}
+
+					// Overide web part active action
+					// If not full control, don't show library tools
+					// var libraryTools = $("#s4-ribbonrow");
+					// if (!perm.full) {
+					// 	libraryTools.hide();
+					// }else{
+					// 	libraryTools.show();
+					// }
+
+				}
+			}
+		})
+	})()
+})
+</script>
+ -->

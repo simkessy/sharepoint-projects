@@ -1,0 +1,36 @@
+/* Fix Bootstrap Changes */
+* {
+	box-sizing: content-box !important;
+}
+.boot-fix * {
+	box-sizing: border-box !important;
+}
+
+body {
+	font-family: Verdana, Arial, sans-serif !important;
+	font-size: 8pt !important;
+	/*display: none;*/
+}
+
+/* Hide Quick Launch  */
+#s4-leftpanel{
+	display: none;
+}
+.s4-ca{
+	margin-left: 0px;
+}
+
+/* Hide DND header  */
+.hideSWSAnnouncement {
+	display: none;
+}
+
+
+/* Custom */
+#new-btn a,
+#new-btn a:hover, 
+#new-btn a:visited{
+	color: white !important;
+	text-decoration: none !important;
+	outline: none !important;
+}

@@ -1,0 +1,109 @@
+<head>
+  <script type="text/javascript" src="/sites/hrco/DGWD/DCEP/Site%20Assets/bundle/es5-shim.min.js"></script>
+  <script type="text/javascript" src="/sites/hrco/DGWD/DCEP/Site%20Assets/bundle/bundle.js"></script>
+  <link rel="stylesheet" type="text/css" href="/sites/hrco/DGWD/DCEP/Site%20Assets/AskDECEP.css">
+</head>
+
+<body class="">
+  <div class="row text-center boot-fix">
+    <div class="col-xs-4">
+      <button id="editBtn" type="button" class="btn btn-block btn-info">Edit Inquiry</button>
+    </div>
+    <div class="col-xs-4">
+      <button id="closeBtn" type="button" class="btn btn-block btn-primary">Close Inquiry</button>
+    </div>
+    <div class="col-xs-4">
+      <button id="takeOverBtn" type="button" class="btn btn-block btn-warning">Take Inquiry</button>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    $(function() {
+
+          // current item name from url parameter
+          var currentInquiry = unescapeProperly(location.search.split("&")[0]).split("/").pop();
+          // current item id 
+          var currentInquiryID = null;
+          // list name
+          var listName = "{98156AEE-BADE-46CC-9796-9D77E461F52F}"; //"+AskDCEP";
+
+          // current user id 
+          var currentUser = $().SPServices.SPGetCurrentUser({
+            fieldNames: ["ID", "Name", "EMail"]
+          });
+
+          // get all threads
+          var getQuestions = $().SPServices({
+            operation: "GetListItems",
+            async: false,
+            listName: listName,
+            CAMLViewFields: "<ViewFields><FieldRef Name='LinkFilename' /></ViewFields>",
+            CAMLQueryOptions: "<QueryOptions><ViewAttributes Scope='RecursiveAll'/></QueryOptions>"
+          });
+
+          // get id from current item 
+          getQuestions.then(function(data) {
+            var results = $(data)
+            results.SPFilterNode("z:row").each(function() {
+              var self = $(this);
+
+              // find the current question
+              if (currentInquiry == self.attr("ows_LinkFilename")) {
+                // set current item
+                currentInquiryID = self.attr('ows_ID')
+              }
+            });
+          })
+
+          // set event on close button 
+          var closeBtn = $("#closeBtn");
+          closeBtn.click(closeDiscussion)
+
+          function closeDiscussion() {
+            $().SPServices({
+              operation: "UpdateListItems",
+              listName: listName,
+              ID: currentInquiryID,
+              valuepairs: [
+                ["Status", "Closed"]
+              ],
+              completefunc: function(xData, Status) {
+                SP.UI.Notify.addNotification("Inquiry " +  currentInquiryID + " closed", false);
+              }
+            })
+          }
+
+          // set event on edit button 
+          var editBtn = $("#editBtn");
+          editBtn.click(editDiscussion)
+
+          function editDiscussion() {
+            var options = {
+              title: currentInquiry,
+              url: "http://collaboration-hr-civ.forces.mil.ca/sites/hrco/DGWD/DCEP/Lists/AskDECEP/EditForm.aspx?ID=" + currentInquiryID
+            }
+
+            SP.UI.ModalDialog.showModalDialog(options);
+          }
+
+          // set take over button 
+          var takeOverBtn = $("#takeOverBtn");
+          takeOverBtn.click(takeOverDiscussion);
+
+          function takeOverDiscussion() {
+            $().SPServices({
+                operation: "UpdateListItems",
+                listName: listName,
+                ID: currentInquiryID,
+                valuepairs: [
+                  ["Assigned_x0020_To", currentUser.ID]
+                ],
+                completefunc: function(xData, Status) {
+                  SP.UI.Notify.addNotification("Now assigned to: " + currentUser.EMail, false);
+                }
+            })
+          }
+
+          })
+  </script>
+</body>
