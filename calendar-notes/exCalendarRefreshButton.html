@@ -93,7 +93,6 @@
 			  	.then(getCalendarEvents)
 			  	.then(updateCalendarEvents)
 		  })
-
 		})
 
 		// Get all items in CCTS EX Log
@@ -254,18 +253,15 @@
 				  ], 
 				}) 
 
-				promises[i].done(function() {
-					obj.update.notify(++i)
-				})
+				// Update progress 
+				promises[i].done(function() { obj.update.notify(++i) })
 			}
 
 			$.map(data, updateEvent)
 
 			$.when.apply($, promises)
 				.done(function() {
-					$('#btn')		
-						.text("Update Completed")
-
+					$('#btn').text("Update Completed")
 					alert('All events updated')
 					location.reload(true)
 				})
