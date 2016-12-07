@@ -1,0 +1,277 @@
+<head>
+	<style>
+		#nav-btn A {
+			TEXT-DECORATION: none !important;
+			COLOR: white !important;
+			display: block;
+			margin-top: 20px;
+			text-align: center;
+			font-size: 16px;
+			width: 90%;
+		}
+		
+		#nav-btn A:hover {
+			TEXT-DECORATION: none !important;
+			COLOR: white !important
+		}
+		
+		#nav-btn A:visited {
+			TEXT-DECORATION: none !important;
+			COLOR: white !important
+		}
+		
+		.btn {
+			CURSOR: pointer;
+			FONT-SIZE: 14px;
+			TEXT-DECORATION: none !important;
+			FONT-FAMILY: Arial;
+			BACKGROUND: #3498db;
+			COLOR: white !important;
+			OUTLINE-WIDTH: medium !important;
+			PADDING-BOTTOM: 10px;
+			PADDING-TOP: 10px;
+			OUTLINE-STYLE: none !important;
+			PADDING-LEFT: 20px;
+			OUTLINE-COLOR: invert !important;
+			PADDING-RIGHT: 20px;
+			-webkit-border-radius: 28;
+			-moz-border-radius: 28;
+			border-radius: 28px
+		}
+		
+		.btn:hover {
+			TEXT-DECORATION: none !important;
+			BACKGROUND: #3cb0fd;
+			COLOR: white !important;
+			OUTLINE-WIDTH: medium !important;
+			OUTLINE-STYLE: none !important;
+			OUTLINE-COLOR: invert !important
+		}
+		
+		.btn:visited {
+			TEXT-DECORATION: none !important;
+			COLOR: white !important
+		}
+		
+		.btn-green {
+			BACKGROUND: #3498aa
+		}
+		
+		.btn-green:hover {
+			BACKGROUND: green
+		}
+		
+		.btn-yellow {
+			BACKGROUND-COLOR: #ffcc00
+		}
+		
+		.btn-yellow:hover {
+			BACKGROUND-COLOR: #ffd633
+		}
+	</style>
+</head>
+<body>
+	<div id="nav-btn"><a id="btn" class="nav-btn btn btn-yellow">Refresh CCTS Data</a></div>
+
+	<script type="text/javascript">
+		var obj = obj || {};
+	  
+		$(function() {
+		  obj.cctsData = [];
+		  obj.calData = [];
+
+		  obj.update = $.Deferred();
+		  obj.update.progress(function(progress){
+		  	$("#btn")
+		  		.attr("disabled", "disabled")
+		  		.text("Updating " + progress + " / " + obj.calData.length + " events")
+		  })
+
+		  $('a.nav-btn').click(function() {
+		  	$("#btn").text("Updating...")
+			  getCCTS()
+			  	.then(getCalendarEvents)
+			  	.then(updateCalendarEvents)
+		  })
+
+		})
+
+		// Get all items in CCTS EX Log
+		var getCCTS = function() {
+			var d = $.Deferred(); 
+		  // Get CCTS Items
+		  var getIDs = $().SPServices.SPGetListItemsJson({
+		    webURL: "/sites/HRC-CORE/J-and-C/CCTS%20Log",
+		    listName: "CCTS EX",
+		    CAMLViewFields: "<ViewFields><FieldRef Name='Title' /><FieldRef Name='ID' /><FieldRef Name='Group' /><FieldRef Name='Level1' /><FieldRef Name='Comments' /><FieldRef Name='ID' /><FieldRef Name='_x004c_10' /><FieldRef Name='Work_x0020_Description_x0020_Tit' /><FieldRef Name='Priority' /><FieldRef Name='Classification_x0020_Action' /><FieldRef Name='Date_x0020_Received_x0020_In_x000' /><FieldRef Name='Classification_x0020_Officer0' /></ViewFields>",
+		    mappingOverrides: {
+		      ows_ID: {
+		        mappedName: "id",
+		        objectType: "Text"
+		      },
+		      ows_Classification_x0020_Officer0: {
+		        mappedName: "classAdvisor",
+		        objectType: "Text"
+		      },
+		      ows_Title: {
+		        mappedName: "title",
+		        objectType: "Text"
+		      },
+		      ows_Group: {
+		        mappedName: "group",
+		        objectType: "Text"
+		      },
+		      ows_Level1: {
+		        mappedName: "level",
+		        objectType: "Text"
+		      },
+		      ows__x004c_10: {
+		        mappedName: "l1",
+		        objectType: "Text"
+		      },
+		      ows_Comments: {
+		        mappedName: "comments",
+		        objectType: "Text"
+		      },
+		      ows_Work_x0020_Description_x0020_Tit: {
+		        mappedName: "workDescription",
+		        objectType: "Text"
+		      },
+		      ows_Classification_x0020_Action: {
+		        mappedName: "classAction",
+		        objectType: "Text"
+		      },
+		      ows_Priority: {
+		        mappedName: "priority",
+		        objectType: "Text"
+		      },
+		      ows_Date_x0020_Received_x0020_In_x000: {
+		        mappedName: "dateReceived",
+		        objectType: "Text"
+		      }
+		    }
+		  });
+
+		  // Store item IDs and Status in array
+		  getIDs.then(function() {
+		    // console.log(this.data[0])
+		    $.map(this.data, function(item) {
+		      obj.cctsData.push({
+		        id: item.id,
+		        l1: item['l1'], //.split("#")[1]
+		        comments: item.comments,
+		        group: item.group, //.split("#")[1]
+		        level: item.level,
+		        title: item.title,
+		        priority: item.priority || "",
+		        classAction: item.classAction,
+		        title: item.title,
+		        dateReceived: item.dateReceived,
+		        workDescription: item.workDescription,
+		        classAdvisor: item.classAdvisor
+		      })
+		    })
+		    d.resolve()
+		  }, d.reject);
+
+			return d.promise();
+		};
+
+		// Get all items in the calendar
+		var getCalendarEvents = function() {
+			var d = $.Deferred(); 
+
+		  var query = '<Query><Where><IsNotNull><FieldRef Name="Location" /></IsNotNull></Where></Query>';
+		  var get = $().SPServices.SPGetListItemsJson({
+		    listName: "ExCalendar",
+		    CAMLQuery: query,
+		    CAMLViewFields: "<ViewFields><FieldRef Name='ID' /><FieldRef Name='Location' /></ViewFields>"
+		  })
+
+			var pass = function() {
+				var data = this.data
+
+				$.map(data, function(x) {
+					obj.calData.push({
+						id: x.ID,
+						location: x.Location
+					})
+				})
+				d.resolve()
+			}
+
+			var fail = function() {
+			  alert("something didn't work :/")
+			  d.reject();
+			}
+
+		  get.then(pass, fail)
+
+		  return d.promise();
+		};
+
+		// Update each event using CCTS Log
+		var updateCalendarEvents = function() {
+			var data = obj.calData;
+			var promises = [];
+
+			var updateEvent = function(e, i) {
+				// Find relevant ccts log item
+				var ccts = _.filter(obj.cctsData, function(x) { 
+					return x.id == e.location
+				})
+
+				// Return first value of results
+				ccts = ccts[0]
+
+				// Prep values
+        var group = ccts.group ? ccts.group.split("#")[1] : "";
+        var level = ccts.level ? ccts.level : "";
+        var classification = group + " - " + level;
+        var title = ccts.title ? ccts.title : "";
+        var classAdvisor = ccts.classAdvisor ? ccts.classAdvisor.split("#")[1] : "";
+        var classAction = ccts.classAction ? ccts.classAction : "";
+        var dateReceived = ccts.dateReceived ? moment(ccts.dateReceived).toISOString() : "";
+        var workDescription = ccts.workDescription ? ccts.workDescription : "";
+        var comments = ccts.comments ? $(ccts.comments).text() : "";
+        var l1 = ccts.l1 ? ccts.l1.split("#")[1] : "";
+
+				// Update calendar event
+				promises[i] = $().SPServices({ 
+				  operation: "UpdateListItems", 
+				  listName: "ExCalendar", 
+				  ID: e.id, 
+				  valuepairs: [ 
+				    ["Position_x0020_Classification", classification],
+				    ["Client", l1], 
+				    ["Classification_x0020_Advisor", classAdvisor], 
+				    ["Classification_x0020_Request", classAction], 
+				    ["Priority", ccts.priority], 
+				    ["Title", title], 
+				    ["Position_x0020_Title", workDescription], 
+				    ["Date", dateReceived], 
+				    ["Comments", comments]
+				  ], 
+				}) 
+
+				promises[i].done(function() {
+					obj.update.notify(++i)
+				})
+			}
+
+			$.map(data, updateEvent)
+
+			$.when.apply($, promises)
+				.done(function() {
+					$('#btn')		
+						.text("Update Completed")
+
+					alert('All events updated')
+					location.reload(true)
+				})
+		}
+
+	</script>
+</body>
+
+
