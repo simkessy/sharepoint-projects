@@ -1,1 +1,178 @@
-<head> <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css"> <script type="text/javascript" src="/sites/hrco/DGWD/DCEP/Site%20Assets/bundle/es5-shim.min.js"></script> <script type="text/javascript" src="/sites/hrco/DGWD/DCEP/Site%20Assets/bundle/bundle.js"></script> <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script> <style type="text/css">  /* Fix Bootstrap Changes */  * {   box-sizing: content-box !important;  }  .boot-fix * {   box-sizing: border-box !important;  }  body {   font-family: Verdana, Arial, sans-serif !important;   font-size: 8pt !important;   /*display: none;*/  }  .ui-autocomplete {   max-height: 100px;   overflow-y: auto;   /* prevent horizontal scrollbar */   overflow-x: hidden;  }  /* IE 6 doesn't support max-height   * we use height instead, but this forces the menu to always be this tall   */  * html .ui-autocomplete {   height: 100px;  }  #custom-search-input{   padding: 3px;   border: solid 1px #E4E4E4;   border-radius: 6px;   background-color: #fff;  }  #custom-search-input input{   border: 0;   box-shadow: none;  }  #custom-search-input button{   margin: 2px 0 0 0;   background: none;   box-shadow: none;   border: 0;   color: #666666;   padding: 0 8px 0 10px;   border-left: solid 1px #ccc;  }  #custom-search-input button:hover{   border: 0;   box-shadow: none;   border-left: solid 1px #ccc;  }  #custom-search-input .glyphicon-search{   font-size: 23px;  } </style></head><body> <div class="container">  <div class="row">   <div>    <h2 class="status">Loading...</h2>    <div id="custom-search-input">     <div class="input-group">      <input id="search" type="text" class="form-control input-sm" />      <span class="input-group-btn">       <button class="btn btn-info btn-lg" type="button">        <i class="glyphicon glyphicon-search"></i>       </button>      </span>     </div>    </div>   </div>   <div id='results'>    <table id="table" class="table table-responsive table-condense table-bordered">     <thead>      <tr id='fields'>       <th>L1</th>       <th>L2</th>       <th>Last Name</th>       <th>First Name</th>       <th>Civil Military</th>       <th>Date Obtained</th>       <th>Management Level</th>       <th>Status</th>       <th>City</th>       <th>Email</th>       <th>File</th>      </tr>     </thead>     <tbody></tbody>    </table>   </div>  </div> </div> <script type="text/javascript">  $(function() {   var input = $('#search');   var results = []    // Get CCTS Items    var getItems = $().SPServices.SPGetListItemsJson({     listName: "Sub-Delegation Authority",     CAMLViewFields: "<ViewFields Properties='False'><FieldRef Name='First_x0020_Name' /><FieldRef Name='Last_x0020_Name' /><FieldRef Name='ID' /><FieldRef Name='L1_x0020_Organization' /><FieldRef Name='L2_x0020_Organization' /><FieldRef Name='Last_x0020_Name' /><FieldRef Name='First_x0020_Name' /><FieldRef Name='Civil_x0020_Military' /><FieldRef Name='Date_x0020_Delegation_x0020_Obtained' /><FieldRef Name='Management_x0020_Level' /><FieldRef Name='Status' /><FieldRef Name='WorkCity' /><FieldRef Name='Email' /><FieldRef Name='FileRef' /></ViewFields>",    });    getItems.then(function() {     var data = this.data     $('.status').text("Search Sub-Delegation")     data.map(function(item) {      results.push({       label: item.First_x0020_Name + " " + item.Last_x0020_Name,       value: item.First_x0020_Name + " " + item.Last_x0020_Name,       l1: item.L1_x0020_Organization,       l2: item.L2_x0020_Organization,       lastName: item.Last_x0020_Name,       firstName: item.First_x0020_Name,       milOrCiv: item.Civil_x0020_Military,       date: moment(item.Date_x0020_Delegation_x0020_Obtained).format("dddd, MMMM Do YYYY, h:mm:ss a"),       mgntLevel: item.Management_x0020_Level,       status: item.Status,       city: item.WorkCity,       email: item.Email,       file: "/" + item.FileRef.lookupValue      })     })    })    input.autocomplete({     source: results,     minLength: 3,     close: function(event, ui) {      event.preventDefault();        // Take input field ID, compare with results results, return item matching ID        var item = _.filter(results, function(item) {          return item.value == input.val()         })[0]        updateTable(item)      },      focus: function(event, ui) {       event.preventDefault();       input.val(ui.item.label);      }    })    var table = $("#table").find('tbody')    var updateTable = function(item) {     table.empty();     table.append("<tr><td>" +      item.l1 + "</td><td>" +      item.l2 + "</td><td>" +      item.lastName + "</td><td>" +      item.firstName + "</td><td>" +      item.milOrCiv + "</td><td>" +      item.date + "</td><td>" +      item.mgntLevel + "</td><td>" +      item.status + "</td><td>" +      item.city + "</td><td>" +      item.email + "</td><td><a href=" + item.file + "> File" +      "</a></td></tr>")    }  }) </script></body>
+<head>
+	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
+	<script type="text/javascript" src="/sites/hrco/DGWD/DCEP/Site%20Assets/bundle/es5-shim.min.js"></script>
+	<script type="text/javascript" src="/sites/hrco/DGWD/DCEP/Site%20Assets/bundle/bundle.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+
+	<style type="text/css">
+		/* Fix Bootstrap Changes */
+		* {
+			box-sizing: content-box !important;
+		}
+		.boot-fix * {
+			box-sizing: border-box !important;
+		}
+
+		body {
+			font-family: Verdana, Arial, sans-serif !important;
+			font-size: 8pt !important;
+			/*display: none;*/
+		}
+		.ui-autocomplete {
+			max-height: 100px;
+			overflow-y: auto;
+			/* prevent horizontal scrollbar */
+			overflow-x: hidden;
+		}
+		/* IE 6 doesn't support max-height   * we use height instead, but this forces the menu to always be this tall   */
+
+		* html .ui-autocomplete {
+			height: 100px;
+		}
+
+		#custom-search-input{
+			padding: 3px;
+			border: solid 1px #E4E4E4;
+			border-radius: 6px;
+			background-color: #fff;
+		}
+
+		#custom-search-input input{
+			border: 0;
+			box-shadow: none;
+		}
+
+		#custom-search-input button{
+			margin: 2px 0 0 0;
+			background: none;
+			box-shadow: none;
+			border: 0;
+			color: #666666;
+			padding: 0 8px 0 10px;
+			border-left: solid 1px #ccc;
+		}
+
+		#custom-search-input button:hover{
+			border: 0;
+			box-shadow: none;
+			border-left: solid 1px #ccc;
+		}
+
+		#custom-search-input .glyphicon-search{
+			font-size: 23px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div>
+				<h2 class="status">Loading...</h2>
+				<div id="custom-search-input">
+					<div class="input-group">
+						<input id="search" type="text" class="form-control input-sm" />
+						<span class="input-group-btn">
+							<button class="btn btn-info btn-lg" type="button">
+								<i class="glyphicon glyphicon-search"></i>
+							</button>
+						</span>
+					</div>
+				</div>
+			</div>
+			<div id='results'>
+				<table id="table" class="table table-responsive table-condense table-bordered">
+					<thead>
+						<tr id='fields'>
+							<th>L1</th>
+							<th>L2</th>
+							<th>Last Name</th>
+							<th>First Name</th>
+							<th>Civil Military</th>
+							<th>Date Obtained</th>
+							<th>Management Level</th>
+							<th>Status</th>
+							<th>City</th>
+							<th>Email</th>
+							<th>File</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		$(function() {
+			var input = $('#search');
+			var results = []
+
+		  // Get CCTS Items
+		  var getItems = $().SPServices.SPGetListItemsJson({
+		  	listName: "Sub-Delegation Authority",
+		  	CAMLViewFields: "<ViewFields Properties='False'><FieldRef Name='First_x0020_Name' /><FieldRef Name='Last_x0020_Name' /><FieldRef Name='ID' /><FieldRef Name='L1_x0020_Organization' /><FieldRef Name='L2_x0020_Organization' /><FieldRef Name='Last_x0020_Name' /><FieldRef Name='First_x0020_Name' /><FieldRef Name='Civil_x0020_Military' /><FieldRef Name='Date_x0020_Delegation_x0020_Obtained' /><FieldRef Name='Management_x0020_Level' /><FieldRef Name='Status' /><FieldRef Name='WorkCity' /><FieldRef Name='Email' /><FieldRef Name='FileRef' /></ViewFields>",
+		  });
+
+		  getItems.then(function() {
+		  	var data = this.data
+		  	$('.status').text("Search Sub-Delegation")
+
+		  	data.map(function(item) {
+		  		results.push({
+		  			label: item.First_x0020_Name + " " + item.Last_x0020_Name,
+		  			value: item.First_x0020_Name + " " + item.Last_x0020_Name,
+		  			l1: item.L1_x0020_Organization,
+		  			l2: item.L2_x0020_Organization,
+		  			lastName: item.Last_x0020_Name,
+		  			firstName: item.First_x0020_Name,
+		  			milOrCiv: item.Civil_x0020_Military,
+		  			date: moment(item.Date_x0020_Delegation_x0020_Obtained).format("dddd, MMMM Do YYYY, h:mm:ss a"),
+		  			mgntLevel: item.Management_x0020_Level,
+		  			status: item.Status,
+		  			city: item.WorkCity,
+		  			email: item.Email,
+		  			file: "/" + item.FileRef.lookupValue
+		  		})
+		  	})
+		  })
+
+		  input.autocomplete({
+		  	source: results,
+		  	minLength: 3,
+		  	close: function(event, ui) {
+		  		event.preventDefault();
+		      // Take input field ID, compare with results results, return item matching ID
+		      var item = _.filter(results, function(item) { 
+		      	return item.value == input.val() 
+		      })[0]
+
+		      updateTable(item)
+		    },
+		    focus: function(event, ui) {
+		    	event.preventDefault();
+		    	input.val(ui.item.label);
+		    }
+		  })
+
+		  var table = $("#table").find('tbody')
+
+		  var updateTable = function(item) {
+		  	table.empty();
+		  	table.append("<tr><td>" +
+		  		item.l1 + "</td><td>" +
+		  		item.l2 + "</td><td>" +
+		  		item.lastName + "</td><td>" +
+		  		item.firstName + "</td><td>" +
+		  		item.milOrCiv + "</td><td>" +
+		  		item.date + "</td><td>" +
+		  		item.mgntLevel + "</td><td>" +
+		  		item.status + "</td><td>" +
+		  		item.city + "</td><td>" +
+		  		item.email + "</td><td><a href=" + item.file + "> File" +
+		  		"</a></td></tr>")
+		  }
+		})
+
+	</script>
+</body>
+
