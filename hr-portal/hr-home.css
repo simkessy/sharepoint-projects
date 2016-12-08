@@ -1,0 +1,49 @@
+/*--Fix Bootstrap Changes--*/
+* {
+	box-sizing: content-box !important;
+}
+.custom * {
+	box-sizing: border-box !important;
+}
+body {
+	font-size: 12px !important;
+}
+/* Hide Quick Launch  */
+#s4-leftpanel{
+	display: none;
+}
+.s4-ca{
+	margin-left: 0px;
+}
+
+/* Hide DND header  */
+.hideSWSAnnouncement {
+	display: none;
+}
+
+#loadingContainer {
+	position: relative;
+	width: 100vw;	
+	height: 100vh;
+	background: none; 
+}
+
+		.container {
+			width: 80%;
+		}
+		#nav-container .wb-tabs [role=tablist] > LI {
+			border: none;
+			outline: none !important
+			border-bottom: 2px solid black;
+			left: 0;
+		}
+		.wb-tabs * { outline: none !important; }
+		#s4-titlerow { display: none; }
+		.ql-title {
+			margin-top: 0px !important;
+		}
+		.bottom {margin-top: 20px}
+		.nav-text {
+			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+			font-size: 14px;
+		}
