@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<head>
+	<style type="text/css">
+		td {
+			border-top: medium none;
+			border-right: medium none;
+			border-bottom: medium none;
+			margin: 0px;
+			border-left: medium none;
+		}
+		/*--Fix Bootstrap Changes--*/
+		* {
+			box-sizing: content-box !important;
+		}
+
+		.custom * {
+			box-sizing: border-box !important;
+		}
+
+		body {
+			font-size: 12px !important;
+		}
+		.contact-item {
+			cursor: pointer;
+			border-bottom: 1px solid red !important;
+		}
+		/* Hide top header with image and breadcrumb*/
+		.s4-title {
+			display: none;
+		}
+		.hideSWSAnnouncement {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<!-- CONTACTS -->
+	<div class="table-container">
+	    <table class="" width="250" align="center" id="Table_04" border="0" cellspacing="0" cellpadding="0">
+			<!-- START HERE -->
+			<tbody class="contact-container"></tbody>
+		</table>
+	</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.SPServices/2014.02/jquery.SPServices.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js"></script>
+
+	<script>
+		// Global variables
+		var contact = contact || {}; 
+
+		// Update below when moving to a different site
+		contact = {
+			name: "Attendees", 
+			path: "/sites/hrcc/SandBox/testwgv2/Lists/Attendees/DispForm.aspx?ID=",
+			enProp: "Title_x0020_FR",
+			frProp: "JobTitle",
+			sortProp: "Order0",
+			delay: 300
+		}
+
+		$(function() {
+			var body = $('.contact-container'); // html container 
+
+			var getContacts = $().SPServices.SPGetListItemsJson({
+				listName: contact.name
+			});
+
+			getContacts.then(function() {
+				var contacts = this.data;
+				// console.log(contacts)
+
+				function renderContact(c) {
+					var titleFR = !_.isUndefined(c[contact.frProp]) ? c[contact.frProp] : "";
+					var titleEN = !_.isUndefined(c[contact.enProp]) ? c[contact.enProp] : "";
+					return '<tr valign="middle" class="contact-item" data-id="'+c.ID+'" data-name="'+c.Title+'"><td width="140" height="50" align="center" style="font-size: 10pt; color: #0072bc;"><a><b>' + c.Title + '</b><br /><i>' + titleEN + '<br />' + titleFR + '</i></a></td></tr>'	
+				}
+
+				_(contacts)
+				.sortBy(contact.sortProp)
+				.map(function(currentContact,index) { 
+					var delay = ++index * contact.delay;
+					setTimeout(function() {
+						body.append(renderContact(currentContact))
+					}, delay) 
+				})
+				.value()
+				
+				// Set up click event handler 
+				body.on("click", ".contact-item", function() {
+					var id = $(this).data("id");
+					var path = contact.path; 
+					var url = path + id; 
+
+					SP.UI.ModalDialog.showModalDialog({
+						url: url,
+						title: $(this).data("name")
+					});
+				})
+
+			}, function() {
+				alert('Error loading contacts, contact someone helpful')
+			})
+
+		})
+	</script>
+</body>
+</html>
